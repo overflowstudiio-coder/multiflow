@@ -24,7 +24,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-size:48px 48px;
   mask-image:radial-gradient(ellipse 80% 70% at 50% 30%,black,transparent)}
 
-/* ===== CONFIG ===== */
 #launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
 .logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
 .logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
@@ -99,7 +98,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
 
-/* ===== VIEWER ===== */
 #viewer_wrapper{display:none;width:100%}
 #viewer_wrapper.active{display:block}
 .viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
@@ -123,7 +121,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .layout-picker button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);
   box-shadow:0 0 12px rgba(0,240,255,.2)}
 
-/* Cartões genéricos */
 .stream-card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);
   border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;flex:1 1 480px;min-width:340px}
 .stream-card:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
@@ -146,13 +143,11 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .chat-resizer{width:6px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s}
 .chat-resizer:hover,.chat-resizer.dragging{background:rgba(0,240,255,.25)}
 
-/* MODO GRELHA */
 .grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
 .grid-container.mode-grid .stream-card{flex:1 1 480px}
 .grid-container.mode-grid.single .stream-card{flex:0 1 auto;width:100%;max-width:calc((min(78vh,80vw) * 16 / 9) + 400px)}
 .grid-container.mode-grid.single{justify-content:center}
 
-/* MODO DESTAQUE (principal + laterais 16:9) */
 .grid-container.mode-focus{display:flex;gap:12px;padding:12px;align-items:flex-start}
 .focus-main{flex:1 1 auto;min-width:0}
 .focus-main .stream-card{flex:initial;width:100%}
@@ -374,7 +369,6 @@ function renderFollowed(list){
   });
 }
 
-/* ---------- Estado / lista ---------- */
 function init(){
   handleAuthRedirect();
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -440,7 +434,6 @@ function renderPills(){
   });
 }
 
-/* ---------- Layouts ---------- */
 function setLayout(mode){
   layout = mode;
   localStorage.setItem(LAYOUT_KEY, mode);
@@ -505,7 +498,6 @@ function streamCardHTML(c, isMain, showMainBtn){
 function renderStreams(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-  const parent = location.hostname;
   grid.className = 'grid-container mode-' + layout + (layout==='grid' && channels.length===1 ? ' single' : '');
   document.getElementById('btn-grid').classList.toggle('active', layout==='grid');
   document.getElementById('btn-focus').classList.toggle('active', layout==='focus');
@@ -521,7 +513,6 @@ function renderStreams(){
     return;
   }
 
-  /* MODO DESTAQUE */
   const main = channels.find(c => c.name === mainChannel) || channels[0];
   const sides = channels.filter(c => c.name !== main.name);
 
