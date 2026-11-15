@@ -1,1 +1,125 @@
-https://suno.com/s/hYToxOnIipJnJMe9
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULTIFLOW — Multi-Stream Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070f; --panel:#0d0d1a;
+  --border:rgba(0,240,255,.15); --border-light:rgba(0,240,255,.3);
+  --cyan:#00f0ff; --magenta:#f107a3; --purple:#7b2ff7;
+  --text:#e8eaf2; --muted:#7a7f99;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rajdhani',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-2;
+  background:radial-gradient(ellipse 60% 50% at 20% 0%,rgba(123,47,247,.18),transparent),
+             radial-gradient(ellipse 50% 40% at 90% 100%,rgba(0,240,255,.10),transparent)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(123,47,247,.07) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(123,47,247,.07) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 30%,black,transparent)}
+
+/* ===== CONFIG ===== */
+#launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
+.logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
+.logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 55%,var(--magenta));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px rgba(123,47,247,.45))}
+.logo-sub{color:var(--muted);font-size:1.1rem;font-weight:500;letter-spacing:2px;margin:14px 0 38px}
+.setup-box{width:min(680px,96vw);padding:30px;border-radius:16px;backdrop-filter:blur(10px);
+  background:linear-gradient(145deg,rgba(18,18,31,.8),rgba(10,10,20,.9));border:1px solid var(--border);
+  box-shadow:0 0 40px rgba(0,240,255,.06)}
+.setup-title{font-family:'Orbitron';font-size:.9rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:22px}
+.input-group{margin-bottom:18px;text-align:left}
+.input-group label{display:block;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px}
+.input-group input{width:100%;background:rgba(7,7,15,.6);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:13px 15px;font-family:inherit;font-size:1rem;font-weight:600;outline:none;transition:border-color .2s}
+.input-group input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,240,255,.08)}
+.channels-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;max-height:180px;overflow-y:auto}
+.channel-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(123,47,247,.12);
+  border:1px solid rgba(123,47,247,.3);color:var(--text);font-size:.85rem;font-weight:600;border-radius:8px;padding:8px 12px;
+  animation:fadeIn .2s}
+.channel-pill button{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:0;line-height:1}
+.channel-pill button:hover{color:var(--magenta)}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.status-live{background:#eb0400;box-shadow:0 0 8px #eb0400;animation:blinkDot 1.5s infinite}
+@keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.25}}
+.viewer-start{width:100%;padding:16px;margin-top:14px;border-radius:10px;border:none;
+  font-family:'Orbitron';font-weight:900;font-size:1rem;letter-spacing:3px;cursor:pointer;
+  background:linear-gradient(90deg,var(--cyan),#00c8ff);color:#041014;
+  box-shadow:0 0 28px rgba(0,240,255,.25);transition:transform .18s,box-shadow .18s}
+.viewer-start:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,240,255,.4)}
+.viewer-start:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.cookie-tip{margin:0 0 18px;padding:12px 16px;border-radius:10px;text-align:left;font-size:.85rem;line-height:1.5;
+  background:rgba(255,205,66,.08);border:1px solid rgba(255,205,66,.3);color:#ffe9b0}
+.cookie-tip strong{color:#ffcd42}
+.twitch-area{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+.btn-twitch{display:inline-flex;align-items:center;gap:10px;background:#9147ff;border:none;color:#fff;
+  border-radius:10px;padding:13px 26px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.8rem;
+  letter-spacing:1.5px;transition:filter .15s,transform .15s;box-shadow:0 0 24px rgba(145,71,255,.35)}
+.btn-twitch:hover{filter:brightness(1.2);transform:translateY(-1px)}
+.btn-twitch svg{width:18px;height:18px}
+.user-card{display:flex;align-items:center;gap:14px;text-align:left;background:rgba(145,71,255,.08);
+  border:1px solid rgba(145,71,255,.3);border-radius:12px;padding:12px 16px}
+.user-card img{width:46px;height:46px;border-radius:50%;border:2px solid #9147ff}
+.user-card .uinfo{flex:1;min-width:0}
+.user-card .uname{font-family:'Orbitron';font-weight:700;font-size:.85rem;letter-spacing:1px;color:#fff}
+.user-card .udesc{font-size:.8rem;color:var(--muted)}
+.btn-logout{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
+  padding:5px 12px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
+.btn-logout:hover{color:#ff4d4d;border-color:#ff4d4d}
+.followed-title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
+.followed-title h3{font-family:'Orbitron';font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#eb0400;display:flex;align-items:center;gap:8px}
+.btn-refresh{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
+.btn-refresh:hover{color:var(--cyan);border-color:var(--cyan)}
+.followed-grid{display:grid;grid-template-columns:1fr;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:6px;text-align:left;padding-right:4px}
+.followed-item{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;
+  background:rgba(7,7,15,.55);border:1px solid var(--border);border-radius:10px;padding:8px 12px;transition:border-color .15s}
+.followed-item:hover{border-color:rgba(0,240,255,.4)}
+.followed-item .thumb{width:104px;height:58px;border-radius:6px;object-fit:cover;background:#000}
+.followed-item .fmeta{min-width:0;overflow:hidden}
+.followed-item .fname{font-weight:700;color:#fff;font-size:.95rem;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden}
+.followed-item .fname .name-text{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.followed-item .fgame{color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.followed-item .ftitle{color:var(--muted);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.followed-item .fviewers{display:block;color:#eb0400;font-size:.72rem;font-weight:700;margin-top:2px}
+.followed-item .fadd{background:rgba(0,240,255,.1);border:1px solid var(--cyan);color:var(--cyan);border-radius:6px;
+  width:28px;height:28px;cursor:pointer;font-size:1.1rem;font-weight:700;flex-shrink:0;transition:all .15s;
+  display:flex;align-items:center;justify-content:center;line-height:1}
+.followed-item .fadd:hover{background:var(--cyan);color:#041014;transform:scale(1.1)}
+.followed-item .fadd.added{background:rgba(123,47,247,.3);border-color:var(--purple);color:#fff;cursor:default;transform:none}
+.followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
+.auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
+
+/* ===== VIEWER ===== */
+#viewer_wrapper{display:none;width:100%}
+#viewer_wrapper.active{display:block}
+.viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
+  background:rgba(7,7,15,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.viewer-topbar .mini-logo{font-family:'Orbitron';font-weight:900;font-size:1rem;letter-spacing:2px;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+.viewer-add-inline{display:flex;gap:8px;flex:1;min-width:230px}
+.viewer-add-inline input{flex:1;background:rgba(18,18,31,.9);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 14px;outline:none;font-family:'Rajdhani';font-weight:600;font-size:.95rem}
+.viewer-add-inline input:focus{border-color:var(--cyan)}
+.viewer-add-inline button{background:linear-gradient(90deg,var(--purple),var(--magenta));border:none;color:#fff;
+  border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.72rem;letter-spacing:1.5px}
+.btn-ghost{background:rgba(18,18,31,.85);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:9px 14px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.68rem;letter-spacing:1.5px;
+  transition:border-color .2s,box-shadow .2s}
+.btn-ghost:hover{border-color:var(--magenta);box-shadow:0 0 12px rgba(241,7,163,.25)}
+.layout-picker{display:flex;gap:6px;align-items:center}
+.layout-picker button{background:rgba(18,18,31,.85);border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.95rem;transition:all .15s}
+.layout-picker button:hover{color:var(--cyan);border-color:var(--cyan)}
+.layout-picker button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);
+  box-shadow:0 0 12px rgba(0,240,255,.2)}
+#btn-notify.active{color:#ffd166;border-color:#ffd166;background:rgba(255,209,102,.1);box-shadow:0 0 12px rgba(255,209,102,.2)
