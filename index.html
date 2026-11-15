@@ -26,12 +26,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 
 /* ===== CONFIGURACAO (launcher) ===== */
 #launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
-.app-warning{max-width:600px;width:100%;margin-bottom:28px;padding:16px 24px;border-radius:12px;
-  background:rgba(241,7,163,.12);border:1px solid rgba(241,7,163,.35);
-  display:flex;align-items:center;gap:14px;text-align:left}
-.app-warning span.icon{font-size:1.8rem;flex-shrink:0}
-.app-warning h4{margin:0 0 6px;font-size:1rem;color:#ff9ad5;letter-spacing:.5px}
-.app-warning p{margin:0;color:#efccdd;font-size:.9rem;line-height:1.4}
 .logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
 .logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
   background:linear-gradient(90deg,var(--cyan),var(--purple) 55%,var(--magenta));
@@ -57,7 +51,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 @keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
 .status-live{background:#eb0400;box-shadow:0 0 8px #eb0400;animation:blinkDot 1.5s infinite}
-.status-offline{background:#4a4a55}
 @keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.25}}
 .viewer-start{width:100%;padding:16px;margin-top:14px;border-radius:10px;border:none;
   font-family:'Orbitron';font-weight:900;font-size:1rem;letter-spacing:3px;cursor:pointer;
@@ -65,6 +58,46 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   box-shadow:0 0 28px rgba(0,240,255,.25);transition:transform .18s,box-shadow .18s}
 .viewer-start:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,240,255,.4)}
 .viewer-start:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ===== LOGIN TWITCH ===== */
+.twitch-area{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
+.btn-twitch{display:inline-flex;align-items:center;gap:10px;background:#9147ff;border:none;color:#fff;
+  border-radius:10px;padding:13px 26px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.8rem;
+  letter-spacing:1.5px;transition:filter .15s,transform .15s;box-shadow:0 0 24px rgba(145,71,255,.35)}
+.btn-twitch:hover{filter:brightness(1.2);transform:translateY(-1px)}
+.btn-twitch svg{width:18px;height:18px}
+.user-card{display:flex;align-items:center;gap:14px;text-align:left;background:rgba(145,71,255,.08);
+  border:1px solid rgba(145,71,255,.3);border-radius:12px;padding:12px 16px}
+.user-card img{width:46px;height:46px;border-radius:50%;border:2px solid #9147ff}
+.user-card .uinfo{flex:1;min-width:0}
+.user-card .uname{font-family:'Orbitron';font-weight:700;font-size:.85rem;letter-spacing:1px;color:#fff}
+.user-card .udesc{font-size:.8rem;color:var(--muted)}
+.btn-logout{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
+  padding:5px 12px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
+.btn-logout:hover{color:#ff4d4d;border-color:#ff4d4d}
+
+/* ===== FOLLOWED LIVE LIST ===== */
+.followed-title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
+.followed-title h3{font-family:'Orbitron';font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#eb0400;display:flex;align-items:center;gap:8px}
+.btn-refresh{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
+.btn-refresh:hover{color:var(--cyan);border-color:var(--cyan)}
+.followed-grid{display:grid;grid-template-columns:1fr;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:6px;text-align:left}
+.followed-item{display:flex;align-items:center;gap:12px;background:rgba(7,7,15,.55);border:1px solid var(--border);
+  border-radius:10px;padding:8px 10px;transition:border-color .15s}
+.followed-item:hover{border-color:rgba(0,240,255,.4)}
+.followed-item .thumb{width:104px;height:58px;border-radius:6px;object-fit:cover;flex-shrink:0;background:#000}
+.followed-item .fmeta{flex:1;min-width:0}
+.followed-item .fname{font-weight:700;color:#fff;font-size:.95rem;display:flex;align-items:center;gap:7px}
+.followed-item .fgame{color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.followed-item .ftitle{color:var(--muted);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.followed-item .fviewers{color:#eb0400;font-size:.75rem;font-weight:700;flex-shrink:0}
+.followed-item .fadd{background:rgba(0,240,255,.1);border:1px solid var(--cyan);color:var(--cyan);border-radius:8px;
+  width:34px;height:34px;cursor:pointer;font-size:1.1rem;font-weight:700;flex-shrink:0;transition:all .15s}
+.followed-item .fadd:hover{background:var(--cyan);color:#041014}
+.followed-item .fadd.added{background:rgba(123,47,247,.3);border-color:var(--purple);color:#fff;cursor:default}
+.followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
+.auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
+.auth-note code{background:#1b1b2b;padding:2px 6px;border-radius:4px;color:var(--cyan)}
 
 /* ===== VIEWER ===== */
 #viewer_wrapper{display:none;width:100%}
@@ -84,7 +117,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   transition:border-color .2s,box-shadow .2s}
 .btn-ghost:hover{border-color:var(--magenta);box-shadow:0 0 12px rgba(241,7,163,.25)}
 .grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
-.stream-wrapper{flex:1 1 420px;min-width:340px;display:flex;flex-direction:column;background:var(--panel);
+.stream-wrapper{flex:1 1 460px;min-width:340px;display:flex;flex-direction:column;background:var(--panel);
   border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;position:relative}
 .stream-wrapper:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
 .stream-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
@@ -99,16 +132,16 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .stream-body{display:flex;height:320px}
 .player-col{flex:1;min-width:0}
 .player-col iframe,.chat-col iframe{width:100%;height:100%;border:0;display:block}
-.chat-col{width:300px;flex-shrink:0;border-left:1px solid var(--border);transition:width .25s,opacity .25s;overflow:hidden}
-.chat-col.hidden{width:0;opacity:0;pointer-events:none}
-.offline-badge{position:absolute;top:40px;right:12px;background:rgba(7,7,15,.75);backdrop-filter:blur(4px);
-  color:#ffcd42;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px;
-  display:flex;align-items:center;gap:6px;z-index:5}
-.offline-badge .pulse{width:7px;height:7px;background:#ffcd42;border-radius:50%}
+.chat-col{width:340px;min-width:260px;max-width:560px;flex-shrink:0;border-left:1px solid var(--border);
+  overflow:hidden;position:relative}
+.chat-col.hidden{width:0!important;min-width:0;opacity:0;pointer-events:none;border-left:none}
+.chat-resizer{width:6px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s}
+.chat-resizer:hover,.chat-resizer.dragging{background:rgba(0,240,255,.25)}
 @media (max-width:768px){
   .stream-body{flex-direction:column;height:auto}
   .player-col iframe{height:260px}
-  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:250px}
+  .chat-resizer{display:none}
+  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:280px}
   .chat-col.hidden{height:0;width:100%}
   .stream-wrapper{flex:1 1 100%;min-width:unset}
 }
@@ -118,22 +151,38 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 
 <!-- PAGINA 1 : CONFIGURACAO -->
 <section id="launcher">
-  <div class="app-warning" id="local-warning" style="display:none">
-    <span class="icon">⚠️</span>
-    <div>
-      <h4>MODO FICHEIRO LOCAL (file://)</h4>
-      <p>Os players e chats da Twitch só funcionam quando o Multiflow está alojado num domínio (ex.: GitHub Pages: <strong>teunome.github.io/multiflow</strong>). Publica o ficheiro para veres as streams.</p>
-    </div>
-  </div>
-
   <div class="logo-eyebrow">Twitch • Multi-Stream • Sem limites</div>
   <h1 class="logo-title">MULTIFLOW</h1>
   <p class="logo-sub">Vê vários canais ao mesmo tempo. Todos os chats. Um só ecrã.</p>
 
   <div class="setup-box">
-    <div class="setup-title">⚙ Configura os teus canais</div>
+    <div class="setup-title">⚙ Configura o teu Multiflow</div>
+
+    <!-- AREA DE LOGIN -->
+    <div class="twitch-area" id="twitch-area">
+      <div id="login-box">
+        <button class="btn-twitch" onclick="twitchLogin()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
+          INICIAR SESSÃO COM TWITCH
+        </button>
+        <p class="auth-note">Inicia sessão para veres <strong>os teus canais seguidos online</strong> e falar nos chats.</p>
+        <p class="auth-note" id="auth-error" style="color:#ff7a7a;display:none"></p>
+      </div>
+      <div id="user-box" style="display:none"></div>
+    </div>
+
+    <!-- CANAIS SEGUIDOS ONLINE -->
+    <div id="followed-section" style="display:none">
+      <div class="followed-title">
+        <h3><span class="status-dot status-live"></span> OS TEUS CANAIS ONLINE</h3>
+        <button class="btn-refresh" onclick="loadFollowed(true)">↻ Atualizar</button>
+      </div>
+      <div id="followed-grid" class="followed-grid"></div>
+    </div>
+
+    <!-- ADICIONAR MANUAL -->
     <div class="input-group">
-      <label for="chInput">Adicionar canal da Twitch</label>
+      <label for="chInput">Adicionar canal manualmente</label>
       <input type="text" id="chInput" placeholder="Nome do canal (ex.: gaules, ibai…) e prime Enter" maxlength="30" autocomplete="off">
     </div>
     <div id="channels" class="channels-list" style="display:none"></div>
@@ -155,48 +204,174 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 </div>
 
 <script>
-const STORAGE_KEY = "multiflow_v1_channels";
-let channels = [];
+/* ============================================================
+   ⚠ CONFIGURAÇÃO OBRIGATÓRIA — cola aqui o teu Client ID da Twitch
+   Obtém em: https://dev.twitch.tv/console/apps
+   ============================================================ */
+const TWITCH_CLIENT_ID = "cmex5tfttf4ox0552zmnzzstn7gbo3";
 
+const STORAGE_KEY = "multiflow_v1_channels";
+const TOKEN_KEY   = "multiflow_v1_token";
+const USER_KEY    = "multiflow_v1_user";
+const SCOPES = "user:read:follows"; // ver canais seguidos online
+let channels = [];
+let twitchUser = null;
+
+/* ---------- OAuth Implicit Grant ---------- */
+function getRedirectUri(){ return location.origin + location.pathname; }
+
+function twitchLogin(){
+  if (!TWITCH_CLIENT_ID || TWITCH_CLIENT_ID.startsWith("cmex5tfttf4ox0552zmnzzstn7gbo3")){
+    showAuthError("O Client ID da Twitch ainda não foi configurado no código.");
+    return;
+  }
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("mflow_oauth_state", state);
+  const url = "https://id.twitch.tv/oauth2/authorize"
+    + "?client_id=" + encodeURIComponent(TWITCH_CLIENT_ID)
+    + "&redirect_uri=" + encodeURIComponent(getRedirectUri())
+    + "&response_type=token"
+    + "&scope=" + encodeURIComponent(SCOPES)
+    + "&state=" + state;
+  location.href = url;
+}
+
+function handleAuthRedirect(){
+  if (!location.hash.includes("access_token")) return false;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const token = params.get("access_token");
+  const state = params.get("state");
+  history.replaceState(null, "", location.pathname); // limpa o token do URL
+  if (!token || state !== sessionStorage.getItem("mflow_oauth_state")) return false;
+  localStorage.setItem(TOKEN_KEY, token);
+  return true;
+}
+
+function showAuthError(msg){
+  const e = document.getElementById("auth-error");
+  e.textContent = msg;
+  e.style.display = "block";
+}
+
+function logout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  twitchUser = null;
+  document.getElementById("login-box").style.display = "block";
+  document.getElementById("user-box").style.display = "none";
+  document.getElementById("followed-section").style.display = "none";
+}
+
+/* ---------- Twitch API ---------- */
+async function twitchApi(path){
+  const token = localStorage.getItem(TOKEN_KEY);
+  const res = await fetch("https://api.twitch.tv/helix" + path, {
+    headers: {
+      "Client-Id": TWITCH_CLIENT_ID,
+      "Authorization": "Bearer " + token
+    }
+  });
+  if (res.status === 401) { logout(); throw new Error("Sessão expirada — inicia sessão outra vez."); }
+  return res.json();
+}
+
+async function loadUser(){
+  const cached = localStorage.getItem(USER_KEY);
+  if (cached) { twitchUser = JSON.parse(cached); renderUser(); await loadFollowed(); return; }
+  try {
+    const data = await twitchApi("/users");
+    if (!data.data || !data.data.length) throw new Error("não foi possível obter o utilizador");
+    twitchUser = data.data[0];
+    localStorage.setItem(USER_KEY, JSON.stringify(twitchUser));
+    renderUser();
+    await loadFollowed();
+  } catch(e){ showAuthError("Erro ao ligar à conta Twitch: " + e.message); }
+}
+
+function renderUser(){
+  document.getElementById("login-box").style.display = "none";
+  const box = document.getElementById("user-box");
+  box.style.display = "block";
+  box.innerHTML = `
+    <div class="user-card">
+      <img src="${twitchUser.profile_image_url}" alt="${twitchUser.display_name}">
+      <div class="uinfo">
+        <div class="uname">${twitchUser.display_name}</div>
+        <div class="udesc">sessão da Twitch ativa — os chats já te reconhecem</div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>`;
+}
+
+async function loadFollowed(force){
+  if (!twitchUser) return;
+  document.getElementById("followed-section").style.display = "block";
+  const grid = document.getElementById("followed-grid");
+  grid.innerHTML = '<div class="followed-empty">A procurar streams em direto…</div>';
+  try {
+    const data = await twitchApi("/streams/followed?user_id=" + twitchUser.id + "&first=60");
+    renderFollowed(data.data || []);
+  } catch(e){
+    grid.innerHTML = '<div class="followed-empty">Não consegui carregar os teus canais online 😕<br><small>'+e.message+'</small></div>';
+  }
+}
+
+function renderFollowed(list){
+  const grid = document.getElementById("followed-grid");
+  grid.innerHTML = '';
+  if (!list.length){
+    grid.innerHTML = '<div class="followed-empty">Nenhum dos teus follows está online agora 😴</div>';
+    return;
+  }
+  list.forEach(s => {
+    const item = document.createElement("div");
+    item.className = "followed-item";
+    const thumb = s.thumbnail_url.replace("{width}","160").replace("{height}","90") + "?t=" + Date.now();
+    const already = channels.find(c => c.name === s.user_login);
+    item.innerHTML = `
+      <img class="thumb" src="${thumb}" alt="">
+      <div class="fmeta">
+        <div class="fname"><span class="status-dot status-live"></span>${s.user_name}</div>
+        <div class="fgame">${s.game_name || "—"}</div>
+        <div class="ftitle">${s.title || ""}</div>
+      </div>
+      <span class="fviewers">👁 ${s.viewer_count.toLocaleString("pt")}</span>
+      <button class="fadd ${already ? "added" : ""}" title="${already ? "Já adicionado" : "Adicionar à visualização"}">
+        ${already ? "✓" : "+"}
+      </button>`;
+    const btn = item.querySelector(".fadd");
+    if (!already) btn.addEventListener("click", () => {
+      addChannel(s.user_login);
+      btn.classList.add("added");
+      btn.textContent = "✓";
+      btn.title = "Já adicionado";
+    });
+    grid.appendChild(item);
+  });
+}
+
+/* ---------- Lista de canais (visualização) ---------- */
 function init(){
+  handleAuthRedirect();
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-  channels = raw.map(c => (typeof c === "string" ? { name: c, live: undefined } : c));
-  checkEnvironment();
-  checkStreams().then(render);
+  channels = raw.map(c => (typeof c === "string" ? { name: c } : c));
+  render();
+  if (localStorage.getItem(TOKEN_KEY)) loadUser();
 }
 
 function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(channels)); }
-
-function checkEnvironment(){
-  const isLocalFile = location.protocol === 'file:';
-  const isLocalhost = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  document.getElementById('local-warning').style.display =
-    (isLocalFile || isLocalhost) ? 'flex' : 'none';
-}
-
-/* Estado LIVE via endpoint público (sem OAuth). Se falhar, assume undefined e não bloqueia nada. */
-async function checkStreams(){
-  await Promise.all(channels.map(async c => {
-    try {
-      const resp = await fetch(`https://tmi.twitch.tv/group/user/${c.name}/chatters`);
-      const data = await resp.json();
-      c.live = Array.isArray(data?.chatters?.viewers) ? data.chatters.viewers.length >= 0 : undefined;
-    } catch { c.live = undefined; }
-  }));
-}
-
 function cleanName(n){ return (n||'').trim().toLowerCase().replace(/[^a-z0-9_]/g, ''); }
 
 function addChannel(name){
   name = cleanName(name);
   if (!name || channels.find(c => c.name === name)) return;
-  channels.push({ name, live: undefined });
+  channels.push({ name });
   save();
-  checkStreams().then(() => { render(); if (inViewer()) renderStreams(); });
+  render();
   if (inViewer()) renderStreams();
 }
 
-async function removeChannel(name){
+function removeChannel(name){
   channels = channels.filter(c => c.name !== name);
   save();
   render();
@@ -216,8 +391,8 @@ function openViewer(){
 function backToConfig(){
   document.getElementById('viewer_wrapper').classList.remove('active');
   document.getElementById('launcher').style.display = 'flex';
-  checkEnvironment();
   render();
+  if (twitchUser) loadFollowed();
 }
 
 function render(){
@@ -235,10 +410,27 @@ function renderPills(){
   channels.forEach(c => {
     const pill = document.createElement('div');
     pill.className = 'channel-pill';
-    const dot = c.live === undefined ? ''
-      : `<span class="status-dot ${c.live ? 'status-live' : 'status-offline'}" title="${c.live ? 'Live' : 'Offline'}"></span>`;
-    pill.innerHTML = `<span>${c.name}</span>${dot}<button title="Remover" onclick="removeChannel('${c.name}')">×</button>`;
+    pill.innerHTML = `<span>${c.name}</span><span class="status-dot status-live"></span><button title="Remover" onclick="removeChannel('${c.name}')">×</button>`;
     box.appendChild(pill);
+  });
+}
+
+function attachResizer(resizer, chat){
+  resizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    resizer.classList.add('dragging');
+    const startX = e.clientX, startW = chat.offsetWidth;
+    const move = ev => {
+      const w = Math.min(560, Math.max(260, startW - (ev.clientX - startX)));
+      chat.style.width = w + 'px';
+    };
+    const up = () => {
+      resizer.classList.remove('dragging');
+      document.removeEventListener('mousemove', move);
+      document.removeEventListener('mouseup', up);
+    };
+    document.addEventListener('mousemove', move);
+    document.addEventListener('mouseup', up);
   });
 }
 
@@ -249,13 +441,9 @@ function renderStreams(){
   channels.forEach(c => {
     const wrap = document.createElement('div');
     wrap.className = 'stream-wrapper';
-    const badge = c.live === false
-      ? '<div class="offline-badge"><span class="pulse"></span>OFFLINE</div>' : '';
-    const liveDot = c.live === true ? '<span class="status-dot status-live"></span>' : '';
     wrap.innerHTML = `
-      ${badge}
       <div class="stream-header">
-        <div class="channel-name">● ${c.name} ${liveDot}</div>
+        <div class="channel-name">● ${c.name} <span class="status-dot status-live"></span></div>
         <div class="controls">
           <button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat">💬 Chat</button>
           <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
@@ -265,11 +453,13 @@ function renderStreams(){
         <div class="player-col">
           <iframe src="https://player.twitch.tv/?channel=${c.name}&parent=${parent}&muted=true&autoplay=true" allowfullscreen></iframe>
         </div>
+        <div class="chat-resizer" title="Arrasta para redimensionar o chat"></div>
         <div class="chat-col" id="chat-${c.name}">
           <iframe src="https://www.twitch.tv/embed/${c.name}/chat?parent=${parent}&darkpopout"></iframe>
         </div>
       </div>`;
     grid.appendChild(wrap);
+    attachResizer(wrap.querySelector('.chat-resizer'), wrap.querySelector('.chat-col'));
   });
 }
 
