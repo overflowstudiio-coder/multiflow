@@ -24,7 +24,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-size:48px 48px;
   mask-image:radial-gradient(ellipse 80% 70% at 50% 30%,black,transparent)}
 
-/* ===== CONFIGURACAO ===== */
 #launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
 .logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
 .logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
@@ -59,7 +58,11 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .viewer-start:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,240,255,.4)}
 .viewer-start:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 
-/* ===== LOGIN TWITCH ===== */
+/* Dica de cookies */
+.cookie-tip{margin:0 0 18px;padding:12px 16px;border-radius:10px;text-align:left;font-size:.85rem;line-height:1.5;
+  background:rgba(255,205,66,.08);border:1px solid rgba(255,205,66,.3);color:#ffe9b0}
+.cookie-tip strong{color:#ffcd42}
+
 .twitch-area{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
 .btn-twitch{display:inline-flex;align-items:center;gap:10px;background:#9147ff;border:none;color:#fff;
   border-radius:10px;padding:13px 26px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.8rem;
@@ -76,27 +79,22 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   padding:5px 12px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
 .btn-logout:hover{color:#ff4d4d;border-color:#ff4d4d}
 
-/* ===== FOLLOWED LIVE LIST ===== */
 .followed-title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
 .followed-title h3{font-family:'Orbitron';font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#eb0400;display:flex;align-items:center;gap:8px}
 .btn-refresh{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
 .btn-refresh:hover{color:var(--cyan);border-color:var(--cyan)}
 .followed-grid{display:grid;grid-template-columns:1fr;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:6px;text-align:left;padding-right:4px}
-
-/* Item: thumbnail | conteúdo (nome + botão juntos) */
 .followed-item{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;
   background:rgba(7,7,15,.55);border:1px solid var(--border);border-radius:10px;padding:8px 12px;
   transition:border-color .15s}
 .followed-item:hover{border-color:rgba(0,240,255,.4)}
 .followed-item .thumb{width:104px;height:58px;border-radius:6px;object-fit:cover;background:#000}
 .followed-item .fmeta{min-width:0;overflow:hidden}
-/* Primeira linha: nome + botão + junto ao nome */
 .followed-item .fname{font-weight:700;color:#fff;font-size:.95rem;display:flex;align-items:center;gap:10px;white-space:nowrap;overflow:hidden}
 .followed-item .fname .name-text{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .followed-item .fgame{color:var(--muted);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .followed-item .ftitle{color:var(--muted);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .followed-item .fviewers{display:block;color:#eb0400;font-size:.72rem;font-weight:700;margin-top:2px}
-/* Botão + pequeno junto ao nome */
 .followed-item .fadd{background:rgba(0,240,255,.1);border:1px solid var(--cyan);color:var(--cyan);border-radius:6px;
   width:28px;height:28px;cursor:pointer;font-size:1.1rem;font-weight:700;flex-shrink:0;transition:all .15s;
   display:flex;align-items:center;justify-content:center;line-height:1}
@@ -105,7 +103,6 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
 
-/* ===== VIEWER ===== */
 #viewer_wrapper{display:none;width:100%}
 #viewer_wrapper.active{display:block}
 .viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
@@ -135,7 +132,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   padding:3px 9px;cursor:pointer;font-size:.8rem;font-family:'Rajdhani';font-weight:600;transition:all .15s}
 .controls button:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.05)}
 .controls button.remove:hover{color:#ff4d4d;border-color:#ff4d4d;background:rgba(255,0,0,.05)}
-.stream-body{display:flex;height:320px}
+.stream-body{display:flex;height:400px}
 .player-col{flex:1;min-width:0}
 .player-col iframe,.chat-col iframe{width:100%;height:100%;border:0;display:block}
 .chat-col{width:340px;min-width:260px;max-width:560px;flex-shrink:0;border-left:1px solid var(--border);
@@ -145,9 +142,9 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .chat-resizer:hover,.chat-resizer.dragging{background:rgba(0,240,255,.25)}
 @media (max-width:768px){
   .stream-body{flex-direction:column;height:auto}
-  .player-col iframe{height:260px}
+  .player-col iframe{height:280px}
   .chat-resizer{display:none}
-  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:280px}
+  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:300px}
   .chat-col.hidden{height:0;width:100%}
   .stream-wrapper{flex:1 1 100%;min-width:unset}
   .followed-item{grid-template-columns:80px 1fr}
@@ -164,6 +161,12 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 
   <div class="setup-box">
     <div class="setup-title">⚙ Configura o teu Multiflow</div>
+
+    <div class="cookie-tip">
+      🍪 <strong>Se os banners de cookies não te deixarem ver/falar:</strong> no browser, permite cookies de terceiros para este site
+      (Firefox: ícone de escudo 🛡 à esquerda do endereço → desativa a proteção para este site; Chrome: 🔒 → Cookies → Permitir),
+      e inicia sessão em <strong>twitch.tv</strong> uma vez. Depois os chat embutidos já te reconhecem.
+    </div>
 
     <div class="twitch-area" id="twitch-area">
       <div id="login-box">
@@ -258,10 +261,7 @@ function logout(){
 async function twitchApi(path){
   const token = localStorage.getItem(TOKEN_KEY);
   const res = await fetch("https://api.twitch.tv/helix" + path, {
-    headers: {
-      "Client-Id": TWITCH_CLIENT_ID,
-      "Authorization": "Bearer " + token
-    }
+    headers: { "Client-Id": TWITCH_CLIENT_ID, "Authorization": "Bearer " + token }
   });
   if (res.status === 401) { logout(); throw new Error("Sessão expirada — inicia sessão outra vez."); }
   return res.json();
@@ -289,7 +289,7 @@ function renderUser(){
       <img src="${twitchUser.profile_image_url}" alt="${twitchUser.display_name}">
       <div class="uinfo">
         <div class="uname">${twitchUser.display_name}</div>
-        <div class="udesc">sessão da Twitch ativa — os chats já te reconhecem</div>
+        <div class="udesc">sessão da Twitch ativa</div>
       </div>
       <button class="btn-logout" onclick="logout()">Sair</button>
     </div>`;
@@ -428,6 +428,11 @@ function attachResizer(resizer, chat){
   });
 }
 
+function popChat(name){
+  window.open('https://www.twitch.tv/popout/' + name + '/chat', 'mflow_chat_' + name,
+    'width=420,height=720,resizable=yes,scrollbars=yes');
+}
+
 function renderStreams(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
@@ -439,7 +444,8 @@ function renderStreams(){
       <div class="stream-header">
         <div class="channel-name">● ${c.name} <span class="status-dot status-live"></span></div>
         <div class="controls">
-          <button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat">💬 Chat</button>
+          <button onclick="popChat('${c.name}')" title="Abrir chat numa janela separada (recomendado para falar)">↗ Chat</button>
+          <button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat embutido">💬</button>
           <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
         </div>
       </div>
