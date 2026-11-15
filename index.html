@@ -120,12 +120,24 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .layout-picker button:hover{color:var(--cyan);border-color:var(--cyan)}
 .layout-picker button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);
   box-shadow:0 0 12px rgba(0,240,255,.2)}
+#btn-notify{background:rgba(18,18,31,.85);border:1px solid var(--border);color:var(--muted);border-radius:8px;
+  padding:8px 12px;cursor:pointer;font-size:.95rem;transition:all .15s}
+#btn-notify:hover{color:#ffd166;border-color:#ffd166}
+#btn-notify.active{color:#ffd166;border-color:#ffd166;background:rgba(255,209,102,.1);box-shadow:0 0 12px rgba(255,209,102,.2)}
 
 .stream-card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);
   border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;flex:1 1 480px;min-width:340px}
 .stream-card:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
+.stream-card.mentioned{border-color:var(--magenta);
+  animation:mentionPulse 1.2s ease-in-out infinite}
+@keyframes mentionPulse{
+  0%,100%{box-shadow:0 0 22px rgba(241,7,163,.55)}
+  50%{box-shadow:0 0 42px rgba(241,7,163,.95)}
+}
+.mention-badge{display:none;background:var(--magenta);color:#fff;font-family:'Orbitron';font-weight:700;
+  font-size:.62rem;border-radius:20px;padding:2px 8px;letter-spacing:1px;animation:blinkDot 1s infinite}
 .card-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
-  background:linear-gradient(90deg,rgba(123,47,247,.1),transparent)}
+  background:linear-gradient(90deg,rgba(123,47,247,.1),transparent);cursor:pointer}
 .cname{display:flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-size:.78rem;
   letter-spacing:2px;text-transform:uppercase;color:var(--cyan);overflow:hidden;white-space:nowrap}
 .controls{display:flex;gap:6px;flex-shrink:0}
@@ -143,8 +155,12 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .chat-resizer{width:6px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s}
 .chat-resizer:hover,.chat-resizer.dragging{background:rgba(0,240,255,.25)}
 
+/* GRELHA: máx. 2 canais por linha */
 .grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
-.grid-container.mode-grid .stream-card{flex:1 1 480px}
+.grid-container.mode-grid .stream-card{flex:1 1 calc(50% - 12px);max-width:calc(50% - 12px)}
+@media (max-width:1200px){
+  .grid-container.mode-grid .stream-card{flex:1 1 100%;max-width:100%}
+}
 .grid-container.mode-grid.single .stream-card{flex:0 1 auto;width:100%;max-width:calc((min(78vh,80vw) * 16 / 9) + 400px)}
 .grid-container.mode-grid.single{justify-content:center}
 
@@ -187,10 +203,10 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div class="twitch-area" id="twitch-area">
       <div id="login-box">
         <button class="btn-twitch" onclick="twitchLogin()">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
           INICIAR SESSÃO COM TWITCH
         </button>
-        <p class="auth-note">Inicia sessão para veres <strong>os teus canais seguidos online</strong> e falar nos chats.</p>
+        <p class="auth-note">Inicia sessão para veres os teus canais seguidos online, falar nos chats <strong>e seres alertado(a) quando te mencionam 🔔</strong>.</p>
         <p class="auth-note" id="auth-error" style="color:#ff7a7a;display:none"></p>
       </div>
       <div id="user-box" style="display:none"></div>
@@ -220,6 +236,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
       <button id="btn-grid" onclick="setLayout('grid')" title="Modo grelha">▦</button>
       <button id="btn-focus" onclick="setLayout('focus')" title="Modo destaque (principal grande + miniaturas)">⧉</button>
     </div>
+    <button id="btn-notify" onclick="toggleNotifications()" title="Notificações de desktop quando te mencionam">🔔</button>
     <div class="viewer-add-inline">
       <input type="text" id="quickAdd" placeholder="adicionar canal…" maxlength="30">
       <button onclick="quickAddChannel()">+ ADD</button>
@@ -236,11 +253,119 @@ const TOKEN_KEY   = "multiflow_v1_token";
 const USER_KEY    = "multiflow_v1_user";
 const LAYOUT_KEY  = "multiflow_v1_layout";
 const MAIN_KEY    = "multiflow_v1_mainchannel";
+const NOTIFY_KEY  = "multiflow_v1_notify";
 const SCOPES = "user:read:follows";
 let channels = [];
 let twitchUser = null;
 let layout = localStorage.getItem(LAYOUT_KEY) || 'grid';
 let mainChannel = localStorage.getItem(MAIN_KEY) || null;
+
+const mentionCounts = {};
+const notifyEnabled = () => localStorage.getItem(NOTIFY_KEY) === '1';
+
+const watcher = {
+  ws: null, retry: null, channels: [],
+  sync(list){
+    this.channels = (list || []).slice();
+    clearTimeout(this.retry);
+    if (this.ws){ try{ this.ws.close(); }catch{} this.ws = null; }
+    if (!twitchUser || !this.channels.length) return;
+    this.connect();
+  },
+  connect(){
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    this.ws = ws;
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags");
+      ws.send("NICK justinfan" + Math.floor(Math.random()*90000+10000));
+      this.channels.forEach(c => ws.send("JOIN #" + c));
+    };
+    ws.onmessage = (e) => {
+      const raw = e.data;
+      if (raw.startsWith("PING")){ ws.send("PONG :tmi.twitch.tv"); return; }
+      raw.split("\r\n").forEach(line => this.parseLine(line));
+    };
+    ws.onclose = () => {
+      if (this.channels.length)
+        this.retry = setTimeout(() => this.connect(), 5000);
+    };
+  },
+  parseLine(line){
+    if (!line.includes(" PRIVMSG #")) return;
+    const tagMatch = line.match(/^@([^ ]+)/);
+    const tags = {};
+    if (tagMatch) tagMatch[1].split(";").forEach(t => {
+      const [k,v] = t.split("="); tags[k] = v;
+    });
+    const rest = tagMatch ? line.slice(tagMatch[0].length) : line;
+    const m = rest.match(/:([^!]+)![^ ]+ PRIVMSG #([^ ]+) :([\s\S]*)/);
+    if (!m) return;
+    const [, userLogin, channel, text] = m;
+    if (!twitchUser) return;
+    const login = twitchUser.login.toLowerCase();
+    if (userLogin.toLowerCase() === login) return;
+    const re = new RegExp("(^|[^a-z0-9_])@?" + login + "([^a-z0-9_]|$)", "i");
+    if (re.test(text)) onMention(channel, tags["display-name"] || userLogin, text);
+  }
+};
+
+function onMention(channel, displayName, text){
+  mentionCounts[channel] = (mentionCounts[channel] || 0) + 1;
+  applyMentionState(channel);
+  playMentionSound();
+  if (notifyEnabled() && "Notification" in window && Notification.permission === "granted"){
+    new Notification("🔔 @te no chat #" + channel, {
+      body: displayName + ": " + text.slice(0, 140)
+    });
+  }
+}
+
+function applyMentionState(channel){
+  const card = document.getElementById("card-" + channel);
+  const badge = document.getElementById("badge-" + channel);
+  if (!card) return;
+  const n = mentionCounts[channel] || 0;
+  if (n > 0){
+    card.classList.add("mentioned");
+    if (badge){ badge.style.display = "inline-block"; badge.textContent = "@" + n; }
+  } else {
+    card.classList.remove("mentioned");
+    if (badge) badge.style.display = "none";
+  }
+}
+
+function clearMention(channel){
+  mentionCounts[channel] = 0;
+  applyMentionState(channel);
+}
+
+let audioCtx = null;
+function playMentionSound(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+    o.frequency.setValueAtTime(880, audioCtx.currentTime);
+    o.frequency.setValueAtTime(1174, audioCtx.currentTime + 0.12);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.45);
+  }catch{}
+}
+
+function toggleNotifications(){
+  const on = !notifyEnabled();
+  localStorage.setItem(NOTIFY_KEY, on ? '1' : '0');
+  if (on && "Notification" in window && Notification.permission !== "granted"){
+    Notification.requestPermission();
+  }
+  const btn = document.getElementById("btn-notify");
+  if (btn) btn.classList.toggle("active", on);
+}
 
 function getRedirectUri(){ return location.origin + location.pathname; }
 
@@ -277,6 +402,7 @@ function logout(){
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   twitchUser = null;
+  watcher.sync([]);
   document.getElementById("login-box").style.display = "block";
   document.getElementById("user-box").style.display = "none";
   document.getElementById("followed-section").style.display = "none";
@@ -293,13 +419,20 @@ async function twitchApi(path){
 
 async function loadUser(){
   const cached = localStorage.getItem(USER_KEY);
-  if (cached) { twitchUser = JSON.parse(cached); renderUser(); await loadFollowed(); return; }
+  if (cached) {
+    twitchUser = JSON.parse(cached);
+    renderUser();
+    watcher.sync(channels.map(c => c.name));
+    await loadFollowed();
+    return;
+  }
   try {
     const data = await twitchApi("/users");
     if (!data.data || !data.data.length) throw new Error("não foi possível obter o utilizador");
     twitchUser = data.data[0];
     localStorage.setItem(USER_KEY, JSON.stringify(twitchUser));
     renderUser();
+    watcher.sync(channels.map(c => c.name));
     await loadFollowed();
   } catch(e){ showAuthError("Erro ao ligar à conta Twitch: " + e.message); }
 }
@@ -313,7 +446,7 @@ function renderUser(){
       <img src="${twitchUser.profile_image_url}" alt="${twitchUser.display_name}">
       <div class="uinfo">
         <div class="uname">${twitchUser.display_name}</div>
-        <div class="udesc">sessão da Twitch ativa</div>
+        <div class="udesc">sessão ativa — vais ser alertado(a) quando te mencionam 🔔</div>
       </div>
       <button class="btn-logout" onclick="logout()">Sair</button>
     </div>`;
@@ -373,6 +506,8 @@ function init(){
   handleAuthRedirect();
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
   channels = raw.map(c => (typeof c === "string" ? { name: c } : c));
+  const btn = document.getElementById("btn-notify");
+  if (btn) btn.classList.toggle("active", notifyEnabled());
   render();
   if (localStorage.getItem(TOKEN_KEY)) loadUser();
 }
@@ -386,14 +521,17 @@ function addChannel(name){
   channels.push({ name });
   save();
   render();
+  watcher.sync(channels.map(c => c.name));
   if (inViewer()) renderStreams();
 }
 
 function removeChannel(name){
   channels = channels.filter(c => c.name !== name);
   if (mainChannel === name) mainChannel = null;
+  delete mentionCounts[name];
   save();
   render();
+  watcher.sync(channels.map(c => c.name));
   if (inViewer()) renderStreams();
   if (inViewer() && channels.length === 0) backToConfig();
 }
@@ -405,6 +543,7 @@ function openViewer(){
   document.getElementById('launcher').style.display = 'none';
   document.getElementById('viewer_wrapper').classList.add('active');
   renderStreams();
+  watcher.sync(channels.map(c => c.name));
 }
 
 function backToConfig(){
@@ -474,9 +613,9 @@ function popChat(name){
 function streamCardHTML(c, isMain, showMainBtn){
   const parent = location.hostname;
   return `
-    <div class="card-header">
-      <div class="cname">● ${c.name} ${isMain ? '<span style="color:#ffd166">★</span>' : '<span class="status-dot status-live"></span>'}</div>
-      <div class="controls">
+    <div class="card-header" onclick="clearMention('${c.name}')">
+      <div class="cname">● ${c.name} ${isMain ? '<span style="color:#ffd166">★</span>' : '<span class="status-dot status-live"></span>'}<span class="mention-badge" id="badge-${c.name}"></span></div>
+      <div class="controls" onclick="event.stopPropagation()">
         ${showMainBtn ? `<button class="main-toggle" onclick="setMain('${c.name}')" title="Tornar canal principal">★ Main</button>` : ''}
         <button onclick="popChat('${c.name}')" title="Chat em janela separada (recomendado p/ falar)">↗</button>
         ${(layout==='grid' || isMain) ? `<button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat">💬</button>` : ''}
@@ -495,6 +634,11 @@ function streamCardHTML(c, isMain, showMainBtn){
     </div>`;
 }
 
+function postRenderMentions(card, c){
+  card.id = "card-" + c.name;
+  requestAnimationFrame(() => applyMentionState(c.name));
+}
+
 function renderStreams(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
@@ -509,6 +653,7 @@ function renderStreams(){
       card.innerHTML = streamCardHTML(c, false, true);
       grid.appendChild(card);
       attachResizer(card.querySelector('.chat-resizer'), card.querySelector('.chat-box'));
+      postRenderMentions(card, c);
     });
     return;
   }
@@ -524,6 +669,7 @@ function renderStreams(){
   focusMain.appendChild(mainCard);
   grid.appendChild(focusMain);
   attachResizer(mainCard.querySelector('.chat-resizer'), mainCard.querySelector('.chat-box'));
+  postRenderMentions(mainCard, main);
 
   if (sides.length){
     const focusSide = document.createElement('div');
@@ -533,6 +679,7 @@ function renderStreams(){
       card.className = 'stream-card';
       card.innerHTML = streamCardHTML(c, false, true);
       focusSide.appendChild(card);
+      postRenderMentions(card, c);
     });
     grid.appendChild(focusSide);
   }
