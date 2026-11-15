@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MULTIFLOW — Multi-Stream Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07070f; --panel:#0d0d1a;
+  --border:rgba(0,240,255,.15); --border-light:rgba(0,240,255,.3);
+  --cyan:#00f0ff; --magenta:#f107a3; --purple:#7b2ff7;
+  --text:#e8eaf2; --muted:#7a7f99;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Rajdhani',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-2;
+  background:radial-gradient(ellipse 60% 50% at 20% 0%,rgba(123,47,247,.18),transparent),
+             radial-gradient(ellipse 50% 40% at 90% 100%,rgba(0,240,255,.10),transparent)}
+body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background-image:linear-gradient(rgba(123,47,247,.07) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(123,47,247,.07) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 80% 70% at 50% 30%,black,transparent)}
+
+/* ===== CONFIGURACAO (launcher) ===== */
+#launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
+.app-warning{max-width:600px;width:100%;margin-bottom:28px;padding:16px 24px;border-radius:12px;
+  background:rgba(241,7,163,.12);border:1px solid rgba(241,7,163,.35);
+  display:flex;align-items:center;gap:14px;text-align:left}
+.app-warning span.icon{font-size:1.8rem;flex-shrink:0}
+.app-warning h4{margin:0 0 6px;font-size:1rem;color:#ff9ad5;letter-spacing:.5px}
+.app-warning p{margin:0;color:#efccdd;font-size:.9rem;line-height:1.4}
+.logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
+.logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
+  background:linear-gradient(90deg,var(--cyan),var(--purple) 55%,var(--magenta));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 24px rgba(123,47,247,.45))}
+.logo-sub{color:var(--muted);font-size:1.1rem;font-weight:500;letter-spacing:2px;margin:14px 0 38px}
+.setup-box{width:min(680px,96vw);padding:30px;border-radius:16px;backdrop-filter:blur(10px);
+  background:linear-gradient(145deg,rgba(18,18,31,.8),rgba(10,10,20,.9));border:1px solid var(--border);
+  box-shadow:0 0 40px rgba(0,240,255,.06)}
+.setup-title{font-family:'Orbitron';font-size:.9rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:22px}
+.input-group{margin-bottom:18px;text-align:left}
+.input-group label{display:block;font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px}
+.input-group input{width:100%;background:rgba(7,7,15,.6);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);padding:13px 15px;font-family:inherit;font-size:1rem;font-weight:600;outline:none;transition:border-color .2s}
+.input-group input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,240,255,.08)}
+.channels-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px;max-height:180px;overflow-y:auto}
+.channel-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(123,47,247,.12);
+  border:1px solid rgba(123,47,247,.3);color:var(--text);font-size:.85rem;font-weight:600;border-radius:8px;padding:8px 12px;
+  animation:fadeIn .2s}
+.channel-pill button{background:none;border:none;color:var(--muted);font-size:1rem;cursor:pointer;padding:0;line-height:1}
+.channel-pill button:hover{color:var(--magenta)}
+@keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
+.status-live{background:#eb0400;box-shadow:0 0 8px #eb0400;animation:blinkDot 1.5s infinite}
+.status-offline{background:#4a4a55}
+@keyframes blinkDot{0%,100%{opacity:1}50%{opacity:.25}}
+.viewer-start{width:100%;padding:16px;margin-top:14px;border-radius:10px;border:none;
+  font-family:'Orbitron';font-weight:900;font-size:1rem;letter-spacing:3px;cursor:pointer;
+  background:linear-gradient(90deg,var(--cyan),#00c8ff);color:#041014;
+  box-shadow:0 0 28px rgba(0,240,255,.25);transition:transform .18s,box-shadow .18s}
+.viewer-start:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,240,255,.4)}
+.viewer-start:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ===== VIEWER ===== */
+#viewer_wrapper{display:none;width:100%}
+#viewer_wrapper.active{display:block}
+.viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
+  background:rgba(7,7,15,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.viewer-topbar .mini-logo{font-family:'Orbitron';font-weight:900;font-size:1rem;letter-spacing:2px;
+  background:linear-gradient(90deg,var(--cyan),var(--magenta));-webkit-background-clip:text;background-clip:text;color:transparent}
+.viewer-add-inline{display:flex;gap:8px;flex:1;min-width:230px}
+.viewer-add-inline input{flex:1;background:rgba(18,18,31,.9);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 14px;outline:none;font-family:'Rajdhani';font-weight:600;font-size:.95rem}
+.viewer-add-inline input:focus{border-color:var(--cyan)}
+.viewer-add-inline button{background:linear-gradient(90deg,var(--purple),var(--magenta));border:none;color:#fff;
+  border-radius:8px;padding:9px 16px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.72rem;letter-spacing:1.5px}
+.btn-ghost{background:rgba(18,18,31,.85);border:1px solid var(--border);color:var(--text);border-radius:8px;
+  padding:9px 14px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.68rem;letter-spacing:1.5px;
+  transition:border-color .2s,box-shadow .2s}
+.btn-ghost:hover{border-color:var(--magenta);box-shadow:0 0 12px rgba(241,7,163,.25)}
+.grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
+.stream-wrapper{flex:1 1 420px;min-width:340px;display:flex;flex-direction:column;background:var(--panel);
+  border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;position:relative}
+.stream-wrapper:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
+.stream-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
+  background:linear-gradient(90deg,rgba(123,47,247,.1),transparent)}
+.channel-name{display:flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-size:.78rem;
+  letter-spacing:2px;text-transform:uppercase;color:var(--cyan);overflow:hidden;white-space:nowrap}
+.controls{display:flex;gap:6px;flex-shrink:0}
+.controls button{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
+  padding:3px 9px;cursor:pointer;font-size:.8rem;font-family:'Rajdhani';font-weight:600;transition:all .15s}
+.controls button:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.05)}
+.controls button.remove:hover{color:#ff4d4d;border-color:#ff4d4d;background:rgba(255,0,0,.05)}
+.stream-body{display:flex;height:320px}
+.player-col{flex:1;min-width:0}
+.player-col iframe,.chat-col iframe{width:100%;height:100%;border:0;display:block}
+.chat-col{width:300px;flex-shrink:0;border-left:1px solid var(--border);transition:width .25s,opacity .25s;overflow:hidden}
+.chat-col.hidden{width:0;opacity:0;pointer-events:none}
+.offline-badge{position:absolute;top:40px;right:12px;background:rgba(7,7,15,.75);backdrop-filter:blur(4px);
+  color:#ffcd42;font-size:.72rem;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px;
+  display:flex;align-items:center;gap:6px;z-index:5}
+.offline-badge .pulse{width:7px;height:7px;background:#ffcd42;border-radius:50%}
+@media (max-width:768px){
+  .stream-body{flex-direction:column;height:auto}
+  .player-col iframe{height:260px}
+  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:250px}
+  .chat-col.hidden{height:0;width:100%}
+  .stream-wrapper{flex:1 1 100%;min-width:unset}
+}
+</style>
+</head>
+<body>
+
+<!-- PAGINA 1 : CONFIGURACAO -->
+<section id="launcher">
+  <div class="app-warning" id="local-warning" style="display:none">
+    <span class="icon">⚠️</span>
+    <div>
+      <h4>MODO FICHEIRO LOCAL (file://)</h4>
+      <p>Os players e chats da Twitch só funcionam quando o Multiflow está alojado num domínio (ex.: GitHub Pages: <strong>teunome.github.io/multiflow</strong>). Publica o ficheiro para veres as streams.</p>
+    </div>
+  </div>
+
+  <div class="logo-eyebrow">Twitch • Multi-Stream • Sem limites</div>
+  <h1 class="logo-title">MULTIFLOW</h1>
+  <p class="logo-sub">Vê vários canais ao mesmo tempo. Todos os chats. Um só ecrã.</p>
+
+  <div class="setup-box">
+    <div class="setup-title">⚙ Configura os teus canais</div>
+    <div class="input-group">
+      <label for="chInput">Adicionar canal da Twitch</label>
+      <input type="text" id="chInput" placeholder="Nome do canal (ex.: gaules, ibai…) e prime Enter" maxlength="30" autocomplete="off">
+    </div>
+    <div id="channels" class="channels-list" style="display:none"></div>
+    <button class="viewer-start" id="startBtn" onclick="openViewer()" disabled>▶&nbsp;&nbsp;COMEÇAR A VER</button>
+  </div>
+</section>
+
+<!-- PAGINA 2 : VIEWER -->
+<div id="viewer_wrapper">
+  <div class="viewer-topbar">
+    <div class="mini-logo">MULTIFLOW</div>
+    <div class="viewer-add-inline">
+      <input type="text" id="quickAdd" placeholder="adicionar canal…" maxlength="30">
+      <button onclick="quickAddChannel()">+ ADD</button>
+    </div>
+    <button class="btn-ghost" onclick="backToConfig()">⚙ CONFIG</button>
+  </div>
+  <div id="grid" class="grid-container"></div>
+</div>
+
+<script>
+const STORAGE_KEY = "multiflow_v1_channels";
+let channels = [];
+
+function init(){
+  const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  channels = raw.map(c => (typeof c === "string" ? { name: c, live: undefined } : c));
+  checkEnvironment();
+  checkStreams().then(render);
+}
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(channels)); }
+
+function checkEnvironment(){
+  const isLocalFile = location.protocol === 'file:';
+  const isLocalhost = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  document.getElementById('local-warning').style.display =
+    (isLocalFile || isLocalhost) ? 'flex' : 'none';
+}
+
+/* Estado LIVE via endpoint público (sem OAuth). Se falhar, assume undefined e não bloqueia nada. */
+async function checkStreams(){
+  await Promise.all(channels.map(async c => {
+    try {
+      const resp = await fetch(`https://tmi.twitch.tv/group/user/${c.name}/chatters`);
+      const data = await resp.json();
+      c.live = Array.isArray(data?.chatters?.viewers) ? data.chatters.viewers.length >= 0 : undefined;
+    } catch { c.live = undefined; }
+  }));
+}
+
+function cleanName(n){ return (n||'').trim().toLowerCase().replace(/[^a-z0-9_]/g, ''); }
+
+function addChannel(name){
+  name = cleanName(name);
+  if (!name || channels.find(c => c.name === name)) return;
+  channels.push({ name, live: undefined });
+  save();
+  checkStreams().then(() => { render(); if (inViewer()) renderStreams(); });
+  if (inViewer()) renderStreams();
+}
+
+async function removeChannel(name){
+  channels = channels.filter(c => c.name !== name);
+  save();
+  render();
+  if (inViewer()) renderStreams();
+  if (inViewer() && channels.length === 0) backToConfig();
+}
+
+function inViewer(){ return document.getElementById('viewer_wrapper').classList.contains('active'); }
+
+function openViewer(){
+  if (!channels.length) return;
+  document.getElementById('launcher').style.display = 'none';
+  document.getElementById('viewer_wrapper').classList.add('active');
+  renderStreams();
+}
+
+function backToConfig(){
+  document.getElementById('viewer_wrapper').classList.remove('active');
+  document.getElementById('launcher').style.display = 'flex';
+  checkEnvironment();
+  render();
+}
+
+function render(){
+  renderPills();
+  const has = channels.length > 0;
+  document.getElementById('channels').style.display = has ? 'flex' : 'none';
+  const btn = document.getElementById('startBtn');
+  btn.disabled = !has;
+  btn.textContent = `▶\u00a0\u00a0COMEÇAR${has ? ' ('+channels.length+')' : ' A VER'}`;
+}
+
+function renderPills(){
+  const box = document.getElementById('channels');
+  box.innerHTML = '';
+  channels.forEach(c => {
+    const pill = document.createElement('div');
+    pill.className = 'channel-pill';
+    const dot = c.live === undefined ? ''
+      : `<span class="status-dot ${c.live ? 'status-live' : 'status-offline'}" title="${c.live ? 'Live' : 'Offline'}"></span>`;
+    pill.innerHTML = `<span>${c.name}</span>${dot}<button title="Remover" onclick="removeChannel('${c.name}')">×</button>`;
+    box.appendChild(pill);
+  });
+}
+
+function renderStreams(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  const parent = location.hostname;
+  channels.forEach(c => {
+    const wrap = document.createElement('div');
+    wrap.className = 'stream-wrapper';
+    const badge = c.live === false
+      ? '<div class="offline-badge"><span class="pulse"></span>OFFLINE</div>' : '';
+    const liveDot = c.live === true ? '<span class="status-dot status-live"></span>' : '';
+    wrap.innerHTML = `
+      ${badge}
+      <div class="stream-header">
+        <div class="channel-name">● ${c.name} ${liveDot}</div>
+        <div class="controls">
+          <button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat">💬 Chat</button>
+          <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
+        </div>
+      </div>
+      <div class="stream-body">
+        <div class="player-col">
+          <iframe src="https://player.twitch.tv/?channel=${c.name}&parent=${parent}&muted=true&autoplay=true" allowfullscreen></iframe>
+        </div>
+        <div class="chat-col" id="chat-${c.name}">
+          <iframe src="https://www.twitch.tv/embed/${c.name}/chat?parent=${parent}&darkpopout"></iframe>
+        </div>
+      </div>`;
+    grid.appendChild(wrap);
+  });
+}
+
+function toggleChat(name){ document.getElementById('chat-'+name).classList.toggle('hidden'); }
+
+function quickAddChannel(){
+  const inp = document.getElementById('quickAdd');
+  addChannel(inp.value);
+  inp.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { addChannel(e.target.value); e.target.value = ''; }
+  });
+  document.getElementById('quickAdd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') quickAddChannel();
+  });
+  init();
+});
+</script>
+</body>
+</html>
