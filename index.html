@@ -122,4 +122,664 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .layout-picker button:hover{color:var(--cyan);border-color:var(--cyan)}
 .layout-picker button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);
   box-shadow:0 0 12px rgba(0,240,255,.2)}
-#btn-notify.active{color:#ffd166;border-color:#ffd166;background:rgba(255,209,102,.1);box-shadow:0 0 12px rgba(255,209,102,.2)
+#btn-notify.active{color:#ffd166;border-color:#ffd166;background:rgba(255,209,102,.1);box-shadow:0 0 12px rgba(255,209,102,.2)}
+
+/* Conteúdo: streams à esquerda + painel de chat à direita */
+.viewer-content{display:flex;gap:0;padding:12px;align-items:stretch}
+#grid{flex:1;min-width:0;padding:0 6px 0 0}
+.panel-resizer{width:6px;flex-shrink:0;cursor:col-resize;border-radius:3px;transition:background .15s}
+.panel-resizer:hover,.panel-resizer.dragging{background:rgba(0,240,255,.25)}
+
+/* PAINEL DE CHAT COM ABAS */
+#chat-panel{width:380px;min-width:280px;max-width:640px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  height:calc(100vh - 100px);position:sticky;top:76px}
+#chat-panel.hidden{width:0!important;min-width:0;opacity:0;pointer-events:none;border:none;margin-left:-6px}
+.chat-tabs{display:flex;gap:5px;padding:8px;background:rgba(18,18,31,.8);border-bottom:1px solid var(--border);
+  overflow-x:auto;flex-shrink:0;scrollbar-width:thin}
+.chat-tab{display:flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--border);
+  color:var(--muted);border-radius:8px;padding:7px 12px;cursor:pointer;font-family:'Rajdhani';font-weight:700;
+  font-size:.85rem;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.chat-tab:hover{color:var(--cyan);border-color:var(--cyan)}
+.chat-tab.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);box-shadow:0 0 10px rgba(0,240,255,.18)}
+.chat-tab .tab-dot{width:7px;height:7px;border-radius:50%;background:#eb0400;box-shadow:0 0 6px #eb0400}
+.chat-tab .tab-badge{display:none;background:var(--magenta);color:#fff;font-family:'Orbitron';font-weight:700;
+  font-size:.6rem;border-radius:20px;padding:1px 7px;animation:blinkDot 1s infinite}
+#chat-frames{flex:1;min-height:0;position:relative}
+.chat-frame{display:none;position:absolute;inset:0}
+.chat-frame.active{display:block}
+.chat-frame iframe{width:100%;height:100%;border:0;display:block}
+.chat-none{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.95rem;padding:20px;text-align:center}
+
+/* Cartões de stream — SÓ player */
+.stream-card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;flex:1 1 480px;min-width:340px}
+.stream-card:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
+.stream-card.mentioned{border-color:var(--magenta);animation:mentionPulse 1.2s ease-in-out infinite}
+@keyframes mentionPulse{0%,100%{box-shadow:0 0 22px rgba(241,7,163,.55)}50%{box-shadow:0 0 42px rgba(241,7,163,.95)}}
+.card-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
+  background:linear-gradient(90deg,rgba(123,47,247,.1),transparent);cursor:pointer}
+.cname{display:flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-size:.78rem;
+  letter-spacing:2px;text-transform:uppercase;color:var(--cyan);overflow:hidden;white-space:nowrap}
+.mention-badge{display:none;background:var(--magenta);color:#fff;font-family:'Orbitron';font-weight:700;
+  font-size:.62rem;border-radius:20px;padding:2px 8px;letter-spacing:1px;animation:blinkDot 1s infinite}
+.controls{display:flex;gap:6px;flex-shrink:0}
+.controls button{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
+  padding:3px 9px;cursor:pointer;font-size:.78rem;font-family:'Rajdhani';font-weight:600;transition:all .15s}
+.controls button:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.05)}
+.controls button.remove:hover{color:#ff4d4d;border-color:#ff4d4d;background:rgba(255,0,0,.05)}
+.controls button.main-toggle:hover{color:#ffd166;border-color:#ffd166}
+.card-body{display:flex;align-items:stretch}
+.player-box{flex:1;min-width:0}
+.player-box iframe{width:100%;height:auto;aspect-ratio:16/9;display:block;border:0}
+
+/* GRELHA: máx. 2 por linha */
+.grid-container{display:flex;flex-wrap:wrap;gap:12px}
+.grid-container.mode-grid .stream-card{flex:1 1 calc(50% - 12px);max-width:calc(50% - 12px)}
+@media (max-width:1200px){.grid-container.mode-grid .stream-card{flex:1 1 100%;max-width:100%}}
+.grid-container.mode-grid.single .stream-card{flex:0 1 auto;width:100%;max-width:calc((min(78vh,80vw) * 16 / 9))}
+.grid-container.mode-grid.single{justify-content:center}
+
+/* DESTAQUE */
+.grid-container.mode-focus{display:flex;gap:12px;align-items:flex-start}
+.focus-main{flex:1 1 auto;min-width:0}
+.focus-main .stream-card{flex:initial;width:100%}
+.focus-side{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;max-height:86vh;overflow-y:auto;padding-right:4px}
+.focus-side .stream-card{flex:initial;min-width:0;width:100%}
+
+@media (max-width:900px){
+  .viewer-content{flex-direction:column}
+  .panel-resizer{display:none}
+  #chat-panel{width:100%!important;height:60vh;position:static;margin-top:12px}
+  .grid-container.mode-focus{flex-direction:column}
+  .focus-side{width:100%;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .focus-side .stream-card{min-width:240px;flex-shrink:0}
+}
+</style>
+</head>
+<body>
+
+<section id="launcher">
+  <div class="logo-eyebrow">Twitch • Multi-Stream • Sem limites</div>
+  <h1 class="logo-title">MULTIFLOW</h1>
+  <p class="logo-sub">Vê vários canais ao mesmo tempo. Todos os chats. Um só ecrã.</p>
+
+  <div class="setup-box">
+    <div class="setup-title">⚙ Configura o teu Multiflow</div>
+
+    <div class="cookie-tip">
+      🍪 <strong>Se os banners de cookies não te deixarem ver/falar:</strong> no browser, permite cookies de terceiros para este site
+      (Firefox: escudo 🛡 à esquerda do endereço → desativa a proteção para este site; Chrome: 🔒 → Cookies → Permitir),
+      e inicia sessão em <strong>twitch.tv</strong> uma vez.
+    </div>
+
+    <div class="twitch-area" id="twitch-area">
+      <div id="login-box">
+        <button class="btn-twitch" onclick="twitchLogin()">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
+          INICIAR SESSÃO COM TWITCH
+        </button>
+        <p class="auth-note">Inicia sessão para veres os teus canais seguidos online, falar nos chats <strong>e seres alertado(a) quando te mencionam 🔔</strong>.</p>
+        <p class="auth-note" id="auth-error" style="color:#ff7a7a;display:none"></p>
+      </div>
+      <div id="user-box" style="display:none"></div>
+    </div>
+
+    <div id="followed-section" style="display:none">
+      <div class="followed-title">
+        <h3><span class="status-dot status-live"></span> OS TEUS CANAIS ONLINE</h3>
+        <button class="btn-refresh" onclick="loadFollowed()">↻ Atualizar</button>
+      </div>
+      <div id="followed-grid" class="followed-grid"></div>
+    </div>
+
+    <div class="input-group">
+      <label for="chInput">Adicionar canal manualmente</label>
+      <input type="text" id="chInput" placeholder="Nome do canal (ex.: gaules, ibai…) e prime Enter" maxlength="30" autocomplete="off">
+    </div>
+    <div id="channels" class="channels-list" style="display:none"></div>
+    <button class="viewer-start" id="startBtn" onclick="openViewer()" disabled>▶&nbsp;&nbsp;COMEÇAR A VER</button>
+  </div>
+</section>
+
+<div id="viewer_wrapper">
+  <div class="viewer-topbar">
+    <div class="mini-logo">MULTIFLOW</div>
+    <div class="layout-picker">
+      <button id="btn-grid" onclick="setLayout('grid')" title="Modo grelha (máx. 2 por linha)">▦</button>
+      <button id="btn-focus" onclick="setLayout('focus')" title="Modo destaque (principal + miniaturas)">⧉</button>
+      <button id="btn-chatpanel" onclick="toggleChatPanel()" title="Mostrar/Ocultar painel de chat">💬</button>
+      <button id="btn-notify" onclick="toggleNotifications()" title="Notificações quando te mencionam">🔔</button>
+    </div>
+    <div class="viewer-add-inline">
+      <input type="text" id="quickAdd" placeholder="adicionar canal…" maxlength="30">
+      <button onclick="quickAddChannel()">+ ADD</button>
+    </div>
+    <button class="btn-ghost" onclick="backToConfig()">⚙ CONFIG</button>
+  </div>
+
+  <div class="viewer-content">
+    <div id="grid" class="grid-container mode-grid"></div>
+    <div class="panel-resizer" id="panel-resizer" title="Arrasta para redimensionar o chat"></div>
+    <aside id="chat-panel">
+      <div class="chat-tabs" id="chat-tabs"></div>
+      <div id="chat-frames"></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const TWITCH_CLIENT_ID = "cmex5tfttf4ox0552zmnzzstn7gbo3";
+const STORAGE_KEY = "multiflow_v1_channels";
+const TOKEN_KEY   = "multiflow_v1_token";
+const USER_KEY    = "multiflow_v1_user";
+const LAYOUT_KEY  = "multiflow_v1_layout";
+const MAIN_KEY    = "multiflow_v1_mainchannel";
+const NOTIFY_KEY  = "multiflow_v1_notify";
+const CHATW_KEY   = "multiflow_v1_chatwidth";
+const SCOPES = "user:read:follows";
+let channels = [];
+let twitchUser = null;
+let layout = localStorage.getItem(LAYOUT_KEY) || 'grid';
+let mainChannel = localStorage.getItem(MAIN_KEY) || null;
+let activeTab = null;
+
+/* ================= MENTIONS WATCHER ================= */
+const mentionCounts = {};
+const notifyEnabled = () => localStorage.getItem(NOTIFY_KEY) === '1';
+
+const watcher = {
+  ws: null, retry: null, channels: [],
+  sync(list){
+    this.channels = (list || []).slice();
+    clearTimeout(this.retry);
+    if (this.ws){ try{ this.ws.close(); }catch{} this.ws = null; }
+    if (!twitchUser || !this.channels.length) return;
+    this.connect();
+  },
+  connect(){
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    this.ws = ws;
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags");
+      ws.send("NICK justinfan" + Math.floor(Math.random()*90000+10000));
+      this.channels.forEach(c => ws.send("JOIN #" + c));
+    };
+    ws.onmessage = (e) => {
+      const raw = e.data;
+      if (raw.startsWith("PING")){ ws.send("PONG :tmi.twitch.tv"); return; }
+      raw.split("\r\n").forEach(line => this.parseLine(line));
+    };
+    ws.onclose = () => {
+      if (this.channels.length) this.retry = setTimeout(() => this.connect(), 5000);
+    };
+  },
+  parseLine(line){
+    if (!line.includes(" PRIVMSG #")) return;
+    const tagMatch = line.match(/^@([^ ]+)/);
+    const tags = {};
+    if (tagMatch) tagMatch[1].split(";").forEach(t => { const [k,v]=t.split("="); tags[k]=v; });
+    const rest = tagMatch ? line.slice(tagMatch[0].length) : line;
+    const m = rest.match(/:([^!]+)![^ ]+ PRIVMSG #([^ ]+) :([\s\S]*)/);
+    if (!m) return;
+    const [, userLogin, channel, text] = m;
+    if (!twitchUser) return;
+    const login = twitchUser.login.toLowerCase();
+    if (userLogin.toLowerCase() === login) return;
+    const re = new RegExp("(^|[^a-z0-9_])@?" + login + "([^a-z0-9_]|$)", "i");
+    if (re.test(text)) onMention(channel, tags["display-name"] || userLogin, text);
+  }
+};
+
+function onMention(channel, displayName, text){
+  mentionCounts[channel] = (mentionCounts[channel] || 0) + 1;
+  applyMentionState(channel);
+  playMentionSound();
+  if (notifyEnabled() && "Notification" in window && Notification.permission === "granted"){
+    new Notification("🔔 @te no chat #" + channel, { body: displayName + ": " + text.slice(0,140) });
+  }
+}
+
+function applyMentionState(channel){
+  const n = mentionCounts[channel] || 0;
+  const card = document.getElementById("card-" + channel);
+  const badge = document.getElementById("badge-" + channel);
+  if (card) card.classList.toggle("mentioned", n > 0);
+  if (badge){ badge.style.display = n > 0 ? "inline-block" : "none"; if (n > 0) badge.textContent = "@" + n; }
+  const tabBadge = document.getElementById("tab-badge-" + channel);
+  if (tabBadge){ tabBadge.style.display = n > 0 ? "inline-block" : "none"; if (n > 0) tabBadge.textContent = "@" + n; }
+}
+
+function clearMention(channel){
+  mentionCounts[channel] = 0;
+  applyMentionState(channel);
+}
+
+let audioCtx = null;
+function playMentionSound(){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sine";
+    o.frequency.value = 880;
+    g.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.18, audioCtx.currentTime + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+    o.frequency.setValueAtTime(880, audioCtx.currentTime);
+    o.frequency.setValueAtTime(1174, audioCtx.currentTime + 0.12);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + 0.45);
+  }catch{}
+}
+
+function toggleNotifications(){
+  const on = !notifyEnabled();
+  localStorage.setItem(NOTIFY_KEY, on ? '1' : '0');
+  if (on && "Notification" in window && Notification.permission !== "granted"){
+    Notification.requestPermission();
+  }
+  document.getElementById("btn-notify").classList.toggle("active", on);
+}
+
+/* ================= CHAT PANEL (abas) ================= */
+function ensureChatFrame(name){
+  if (document.getElementById("frame-" + name)) return;
+  const parent = location.hostname;
+  const frames = document.getElementById("chat-frames");
+  const none = frames.querySelector(".chat-none");
+  if (none) none.remove();
+  const frame = document.createElement("div");
+  frame.className = "chat-frame";
+  frame.id = "frame-" + name;
+  frame.innerHTML = `<iframe src="https://www.twitch.tv/embed/${name}/chat?parent=${parent}&darkpopout"></iframe>`;
+  frames.appendChild(frame);
+  renderTabs();
+  if (!activeTab) setActiveTab(name);
+  else applyMentionState(name);
+}
+
+function removeChatFrame(name){
+  const frame = document.getElementById("frame-" + name);
+  if (frame) frame.remove();
+  if (activeTab === name){
+    activeTab = null;
+    renderTabs();
+    if (channels.length) setActiveTab(channels[0].name);
+    else renderNonePlaceholder();
+  } else renderTabs();
+}
+
+function renderNonePlaceholder(){
+  const frames = document.getElementById("chat-frames");
+  frames.innerHTML = '<div class="chat-none">Adiciona canais para veres os chats aqui 💬</div>';
+}
+
+function renderTabs(){
+  const tabs = document.getElementById("chat-tabs");
+  tabs.innerHTML = '';
+  channels.forEach(c => {
+    const t = document.createElement("button");
+    t.className = "chat-tab" + (activeTab === c.name ? " active" : "");
+    t.innerHTML = `<span class="tab-dot"></span>${c.name}<span class="tab-badge" id="tab-badge-${c.name}"></span>`;
+    t.onclick = () => setActiveTab(c.name);
+    tabs.appendChild(t);
+    requestAnimationFrame(() => applyMentionState(c.name));
+  });
+}
+
+function setActiveTab(name){
+  if (!channels.find(c => c.name === name)) return;
+  activeTab = name;
+  clearMention(name);
+  document.querySelectorAll(".chat-frame").forEach(f => f.classList.remove("active"));
+  const frame = document.getElementById("frame-" + name);
+  if (frame) frame.classList.add("active");
+  renderTabs();
+}
+
+function toggleChatPanel(){
+  document.getElementById("chat-panel").classList.toggle("hidden");
+}
+
+/* resizer do painel */
+(function initPanelResizer(){
+  document.addEventListener('DOMContentLoaded', () => {
+    const resizer = document.getElementById("panel-resizer");
+    const panel = document.getElementById("chat-panel");
+    const savedW = parseInt(localStorage.getItem(CHATW_KEY) || "0");
+    if (savedW) panel.style.width = savedW + "px";
+    resizer.addEventListener('mousedown', e => {
+      e.preventDefault();
+      resizer.classList.add("dragging");
+      const startX = e.clientX, startW = panel.offsetWidth;
+      const move = ev => {
+        const w = Math.min(640, Math.max(280, startW - (ev.clientX - startX)));
+        panel.style.width = w + "px";
+      };
+      const up = () => {
+        resizer.classList.remove("dragging");
+        localStorage.setItem(CHATW_KEY, String(panel.offsetWidth));
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    });
+  });
+})();
+
+/* ================= OAuth Twitch ================= */
+function getRedirectUri(){ return location.origin + location.pathname; }
+
+function twitchLogin(){
+  const state = Math.random().toString(36).slice(2);
+  sessionStorage.setItem("mflow_oauth_state", state);
+  const url = "https://id.twitch.tv/oauth2/authorize"
+    + "?client_id=" + encodeURIComponent(TWITCH_CLIENT_ID)
+    + "&redirect_uri=" + encodeURIComponent(getRedirectUri())
+    + "&response_type=token"
+    + "&scope=" + encodeURIComponent(SCOPES)
+    + "&state=" + state;
+  location.href = url;
+}
+
+function handleAuthRedirect(){
+  if (!location.hash.includes("access_token")) return false;
+  const params = new URLSearchParams(location.hash.slice(1));
+  const token = params.get("access_token");
+  const state = params.get("state");
+  history.replaceState(null, "", location.pathname);
+  if (!token || state !== sessionStorage.getItem("mflow_oauth_state")) return false;
+  localStorage.setItem(TOKEN_KEY, token);
+  return true;
+}
+
+function showAuthError(msg){
+  const e = document.getElementById("auth-error");
+  e.textContent = msg;
+  e.style.display = "block";
+}
+
+function logout(){
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+  twitchUser = null;
+  watcher.sync([]);
+  document.getElementById("login-box").style.display = "block";
+  document.getElementById("user-box").style.display = "none";
+  document.getElementById("followed-section").style.display = "none";
+}
+
+async function twitchApi(path){
+  const token = localStorage.getItem(TOKEN_KEY);
+  const res = await fetch("https://api.twitch.tv/helix" + path, {
+    headers: { "Client-Id": TWITCH_CLIENT_ID, "Authorization": "Bearer " + token }
+  });
+  if (res.status === 401){ logout(); throw new Error("Sessão expirada — inicia sessão outra vez."); }
+  return res.json();
+}
+
+async function loadUser(){
+  const cached = localStorage.getItem(USER_KEY);
+  if (cached){
+    twitchUser = JSON.parse(cached);
+    renderUser();
+    watcher.sync(channels.map(c => c.name));
+    await loadFollowed();
+    return;
+  }
+  try {
+    const data = await twitchApi("/users");
+    if (!data.data || !data.data.length) throw new Error("não foi possível obter o utilizador");
+    twitchUser = data.data[0];
+    localStorage.setItem(USER_KEY, JSON.stringify(twitchUser));
+    renderUser();
+    watcher.sync(channels.map(c => c.name));
+    await loadFollowed();
+  } catch(e){ showAuthError("Erro ao ligar à conta Twitch: " + e.message); }
+}
+
+function renderUser(){
+  document.getElementById("login-box").style.display = "none";
+  const box = document.getElementById("user-box");
+  box.style.display = "block";
+  box.innerHTML = `
+    <div class="user-card">
+      <img src="${twitchUser.profile_image_url}" alt="${twitchUser.display_name}">
+      <div class="uinfo">
+        <div class="uname">${twitchUser.display_name}</div>
+        <div class="udesc">sessão ativa — vais ser alertado(a) quando te mencionam 🔔</div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>`;
+}
+
+async function loadFollowed(){
+  if (!twitchUser) return;
+  document.getElementById("followed-section").style.display = "block";
+  const grid = document.getElementById("followed-grid");
+  grid.innerHTML = '<div class="followed-empty">A procurar streams em direto…</div>';
+  try {
+    const data = await twitchApi("/streams/followed?user_id=" + twitchUser.id + "&first=60");
+    renderFollowed(data.data || []);
+  } catch(e){
+    grid.innerHTML = '<div class="followed-empty">Não consegui carregar os teus canais online 😕<br><small>'+e.message+'</small></div>';
+  }
+}
+
+function renderFollowed(list){
+  const grid = document.getElementById("followed-grid");
+  grid.innerHTML = '';
+  if (!list.length){
+    grid.innerHTML = '<div class="followed-empty">Nenhum dos teus follows está online agora 😴</div>';
+    return;
+  }
+  list.forEach(s => {
+    const item = document.createElement("div");
+    item.className = "followed-item";
+    const thumb = s.thumbnail_url.replace("{width}","160").replace("{height}","90") + "?t=" + Date.now();
+    const already = channels.find(c => c.name === s.user_login);
+    item.innerHTML = `
+      <img class="thumb" src="${thumb}" alt="">
+      <div class="fmeta">
+        <div class="fname">
+          <span class="status-dot status-live"></span>
+          <span class="name-text">${s.user_name}</span>
+          <button class="fadd ${already ? "added" : ""}" title="${already ? "Já adicionado" : "Adicionar à visualização"}">
+            ${already ? "✓" : "+"}
+          </button>
+        </div>
+        <div class="fgame">${s.game_name || "—"}</div>
+        <div class="ftitle">${s.title || ""}</div>
+        <span class="fviewers">👁 ${s.viewer_count.toLocaleString("pt")}</span>
+      </div>`;
+    const btn = item.querySelector(".fadd");
+    if (!already) btn.addEventListener("click", () => {
+      addChannel(s.user_login);
+      btn.classList.add("added");
+      btn.textContent = "✓";
+      btn.title = "Já adicionado";
+    });
+    grid.appendChild(item);
+  });
+}
+
+/* ================= Estado ================= */
+function init(){
+  handleAuthRedirect();
+  const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  channels = raw.map(c => (typeof c === "string" ? { name: c } : c));
+  document.getElementById("btn-notify").classList.toggle("active", notifyEnabled());
+  renderNonePlaceholder();
+  renderTabs();
+  render();
+  if (localStorage.getItem(TOKEN_KEY)) loadUser();
+}
+
+function save(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(channels)); }
+function cleanName(n){ return (n||'').trim().toLowerCase().replace(/[^a-z0-9_]/g, ''); }
+
+function addChannel(name){
+  name = cleanName(name);
+  if (!name || channels.find(c => c.name === name)) return;
+  channels.push({ name });
+  save();
+  render();
+  ensureChatFrame(name);
+  watcher.sync(channels.map(c => c.name));
+  if (inViewer()) renderStreams();
+}
+
+function removeChannel(name){
+  channels = channels.filter(c => c.name !== name);
+  if (mainChannel === name) mainChannel = null;
+  delete mentionCounts[name];
+  removeChatFrame(name);
+  save();
+  render();
+  watcher.sync(channels.map(c => c.name));
+  if (inViewer()) renderStreams();
+  if (inViewer() && channels.length === 0) backToConfig();
+}
+
+function inViewer(){ return document.getElementById('viewer_wrapper').classList.contains('active'); }
+
+function openViewer(){
+  if (!channels.length) return;
+  document.getElementById('launcher').style.display = 'none';
+  document.getElementById('viewer_wrapper').classList.add('active');
+  renderStreams();
+  watcher.sync(channels.map(c => c.name));
+}
+
+function backToConfig(){
+  document.getElementById('viewer_wrapper').classList.remove('active');
+  document.getElementById('launcher').style.display = 'flex';
+  render();
+  if (twitchUser) loadFollowed();
+}
+
+function render(){
+  renderPills();
+  const has = channels.length > 0;
+  document.getElementById('channels').style.display = has ? 'flex' : 'none';
+  const btn = document.getElementById('startBtn');
+  btn.disabled = !has;
+  btn.textContent = `▶\u00a0\u00a0COMEÇAR${has ? ' ('+channels.length+')' : ' A VER'}`;
+}
+
+function renderPills(){
+  const box = document.getElementById('channels');
+  box.innerHTML = '';
+  channels.forEach(c => {
+    const pill = document.createElement('div');
+    pill.className = 'channel-pill';
+    pill.innerHTML = `<span>${c.name}</span><span class="status-dot status-live"></span><button title="Remover" onclick="removeChannel('${c.name}')">×</button>`;
+    box.appendChild(pill);
+  });
+}
+
+function setLayout(mode){
+  layout = mode;
+  localStorage.setItem(LAYOUT_KEY, mode);
+  renderStreams(); /* os chats NÃO recarregam — o painel é independente */
+}
+
+function setMain(name){
+  mainChannel = name;
+  localStorage.setItem(MAIN_KEY, name);
+  setActiveTab(name); /* sincroniza a aba com o canal principal */
+  renderStreams();
+}
+
+function popChat(name){
+  window.open('https://www.twitch.tv/popout/' + name + '/chat', 'mflow_chat_' + name,
+    'width=420,height=720,resizable=yes,scrollbars=yes');
+}
+
+function streamCardHTML(c, isMain, showMainBtn){
+  const parent = location.hostname;
+  return `
+    <div class="card-header" onclick="setActiveTab('${c.name}')">
+      <div class="cname">● ${c.name} ${isMain ? '<span style="color:#ffd166">★</span>' : '<span class="status-dot status-live"></span>'}<span class="mention-badge" id="badge-${c.name}"></span></div>
+      <div class="controls" onclick="event.stopPropagation()">
+        ${showMainBtn ? `<button class="main-toggle" onclick="setMain('${c.name}')" title="Tornar canal principal">★ Main</button>` : ''}
+        <button onclick="popChat('${c.name}')" title="Chat em janela separada">↗</button>
+        <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="player-box">
+        <iframe src="https://player.twitch.tv/?channel=${c.name}&parent=${parent}&muted=${isMain ? 'false' : 'true'}&autoplay=true" allowfullscreen></iframe>
+      </div>
+    </div>`;
+}
+
+function postRenderCard(card, c){
+  card.id = "card-" + c.name;
+  requestAnimationFrame(() => applyMentionState(c.name));
+}
+
+function renderStreams(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  grid.className = 'grid-container mode-' + layout + (layout==='grid' && channels.length===1 ? ' single' : '');
+  document.getElementById('btn-grid').classList.toggle('active', layout==='grid');
+  document.getElementById('btn-focus').classList.toggle('active', layout==='focus');
+
+  if (layout === 'grid'){
+    channels.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'stream-card';
+      card.innerHTML = streamCardHTML(c, false, true);
+      grid.appendChild(card);
+      postRenderCard(card, c);
+    });
+    return;
+  }
+
+  const main = channels.find(c => c.name === mainChannel) || channels[0];
+  const sides = channels.filter(c => c.name !== main.name);
+
+  const focusMain = document.createElement('div');
+  focusMain.className = 'focus-main';
+  const mainCard = document.createElement('div');
+  mainCard.className = 'stream-card';
+  mainCard.innerHTML = streamCardHTML(main, true, false);
+  focusMain.appendChild(mainCard);
+  grid.appendChild(focusMain);
+  postRenderCard(mainCard, main);
+
+  if (sides.length){
+    const focusSide = document.createElement('div');
+    focusSide.className = 'focus-side';
+    sides.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'stream-card';
+      card.innerHTML = streamCardHTML(c, false, true);
+      focusSide.appendChild(card);
+      postRenderCard(card, c);
+    });
+    grid.appendChild(focusSide);
+  }
+}
+
+function quickAddChannel(){
+  const inp = document.getElementById('quickAdd');
+  addChannel(inp.value);
+  inp.value = '';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('chInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ addChannel(e.target.value); e.target.value = ''; }
+  });
+  document.getElementById('quickAdd').addEventListener('keydown', e => {
+    if (e.key === 'Enter') quickAddChannel();
+  });
+  init();
+});
+</script>
+</body>
+</html>
