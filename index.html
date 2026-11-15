@@ -24,6 +24,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   background-size:48px 48px;
   mask-image:radial-gradient(ellipse 80% 70% at 50% 30%,black,transparent)}
 
+/* ===== CONFIG ===== */
 #launcher{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 20px;text-align:center}
 .logo-eyebrow{font-weight:600;letter-spacing:6px;font-size:.8rem;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
 .logo-title{font-family:'Orbitron';font-weight:900;font-size:clamp(2.6rem,8vw,5.5rem);letter-spacing:4px;line-height:1;
@@ -57,12 +58,9 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   box-shadow:0 0 28px rgba(0,240,255,.25);transition:transform .18s,box-shadow .18s}
 .viewer-start:hover{transform:translateY(-2px);box-shadow:0 0 40px rgba(0,240,255,.4)}
 .viewer-start:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-
-/* Dica de cookies */
 .cookie-tip{margin:0 0 18px;padding:12px 16px;border-radius:10px;text-align:left;font-size:.85rem;line-height:1.5;
   background:rgba(255,205,66,.08);border:1px solid rgba(255,205,66,.3);color:#ffe9b0}
 .cookie-tip strong{color:#ffcd42}
-
 .twitch-area{margin-bottom:22px;padding-bottom:22px;border-bottom:1px solid var(--border)}
 .btn-twitch{display:inline-flex;align-items:center;gap:10px;background:#9147ff;border:none;color:#fff;
   border-radius:10px;padding:13px 26px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.8rem;
@@ -78,15 +76,13 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .btn-logout{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
   padding:5px 12px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
 .btn-logout:hover{color:#ff4d4d;border-color:#ff4d4d}
-
 .followed-title{display:flex;align-items:center;justify-content:space-between;margin:6px 0 12px}
 .followed-title h3{font-family:'Orbitron';font-size:.75rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#eb0400;display:flex;align-items:center;gap:8px}
 .btn-refresh{background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.75rem;font-family:'Rajdhani';font-weight:600}
 .btn-refresh:hover{color:var(--cyan);border-color:var(--cyan)}
 .followed-grid{display:grid;grid-template-columns:1fr;gap:8px;max-height:320px;overflow-y:auto;margin-bottom:6px;text-align:left;padding-right:4px}
 .followed-item{display:grid;grid-template-columns:104px 1fr;gap:12px;align-items:center;
-  background:rgba(7,7,15,.55);border:1px solid var(--border);border-radius:10px;padding:8px 12px;
-  transition:border-color .15s}
+  background:rgba(7,7,15,.55);border:1px solid var(--border);border-radius:10px;padding:8px 12px;transition:border-color .15s}
 .followed-item:hover{border-color:rgba(0,240,255,.4)}
 .followed-item .thumb{width:104px;height:58px;border-radius:6px;object-fit:cover;background:#000}
 .followed-item .fmeta{min-width:0;overflow:hidden}
@@ -103,6 +99,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
 
+/* ===== VIEWER ===== */
 #viewer_wrapper{display:none;width:100%}
 #viewer_wrapper.active{display:block}
 .viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
@@ -119,36 +116,60 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
   padding:9px 14px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.68rem;letter-spacing:1.5px;
   transition:border-color .2s,box-shadow .2s}
 .btn-ghost:hover{border-color:var(--magenta);box-shadow:0 0 12px rgba(241,7,163,.25)}
-.grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
-.stream-wrapper{flex:1 1 460px;min-width:340px;display:flex;flex-direction:column;background:var(--panel);
-  border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;position:relative}
-.stream-wrapper:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
-.stream-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
+.layout-picker{display:flex;gap:6px}
+.layout-picker button{background:rgba(18,18,31,.85);border:1px solid var(--border);color:var(--muted);
+  border-radius:8px;padding:8px 12px;cursor:pointer;font-size:.95rem;transition:all .15s}
+.layout-picker button:hover{color:var(--cyan);border-color:var(--cyan)}
+.layout-picker button.active{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.1);
+  box-shadow:0 0 12px rgba(0,240,255,.2)}
+
+/* Cartões genéricos */
+.stream-card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;transition:border-color .2s,box-shadow .2s;flex:1 1 480px;min-width:340px}
+.stream-card:hover{border-color:rgba(0,240,255,.35);box-shadow:0 0 20px rgba(0,240,255,.08)}
+.card-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;gap:10px;
   background:linear-gradient(90deg,rgba(123,47,247,.1),transparent)}
-.channel-name{display:flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-size:.78rem;
+.cname{display:flex;align-items:center;gap:8px;font-family:'Orbitron';font-weight:700;font-size:.78rem;
   letter-spacing:2px;text-transform:uppercase;color:var(--cyan);overflow:hidden;white-space:nowrap}
 .controls{display:flex;gap:6px;flex-shrink:0}
 .controls button{background:none;border:1px solid var(--border-light);color:var(--muted);border-radius:6px;
-  padding:3px 9px;cursor:pointer;font-size:.8rem;font-family:'Rajdhani';font-weight:600;transition:all .15s}
+  padding:3px 9px;cursor:pointer;font-size:.78rem;font-family:'Rajdhani';font-weight:600;transition:all .15s}
 .controls button:hover{color:var(--cyan);border-color:var(--cyan);background:rgba(0,240,255,.05)}
 .controls button.remove:hover{color:#ff4d4d;border-color:#ff4d4d;background:rgba(255,0,0,.05)}
-.stream-body{display:flex;height:400px}
-.player-col{flex:1;min-width:0}
-.player-col iframe,.chat-col iframe{width:100%;height:100%;border:0;display:block}
-.chat-col{width:340px;min-width:260px;max-width:560px;flex-shrink:0;border-left:1px solid var(--border);
-  overflow:hidden;position:relative}
-.chat-col.hidden{width:0!important;min-width:0;opacity:0;pointer-events:none;border-left:none}
+.controls button.main-toggle:hover{color:#ffd166;border-color:#ffd166}
+.card-body{display:flex;align-items:stretch}
+.player-box{flex:1;min-width:0}
+.player-box iframe{width:100%;height:auto;aspect-ratio:16/9;display:block;border:0}
+.chat-box{width:340px;min-width:260px;max-width:560px;flex-shrink:0;border-left:1px solid var(--border);overflow:hidden}
+.chat-box iframe{width:100%;height:100%;border:0;display:block}
+.chat-box.hidden{width:0!important;min-width:0;opacity:0;pointer-events:none;border-left:none}
 .chat-resizer{width:6px;flex-shrink:0;cursor:col-resize;background:transparent;transition:background .15s}
 .chat-resizer:hover,.chat-resizer.dragging{background:rgba(0,240,255,.25)}
+
+/* MODO GRELHA */
+.grid-container{display:flex;flex-wrap:wrap;gap:12px;padding:12px}
+.grid-container.mode-grid .stream-card{flex:1 1 480px}
+.grid-container.mode-grid.single .stream-card{flex:0 1 auto;width:100%;max-width:calc((min(78vh,80vw) * 16 / 9) + 400px)}
+.grid-container.mode-grid.single{justify-content:center}
+
+/* MODO DESTAQUE (principal + laterais 16:9) */
+.grid-container.mode-focus{display:flex;gap:12px;padding:12px;align-items:flex-start}
+.focus-main{flex:1 1 auto;min-width:0}
+.focus-main .stream-card{flex:initial;width:100%}
+.focus-side{width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;max-height:86vh;overflow-y:auto;padding-right:4px}
+.focus-side .stream-card{flex:initial;min-width:0;width:100%}
+.focus-side .card-body{display:block}
+.focus-side .player-box iframe{aspect-ratio:16/9}
+
+@media (max-width:900px){
+  .grid-container.mode-focus{flex-direction:column}
+  .focus-side{width:100%;max-height:none;flex-direction:row;overflow-x:auto;overflow-y:hidden}
+  .focus-side .stream-card{min-width:240px;flex-shrink:0}
+}
 @media (max-width:768px){
-  .stream-body{flex-direction:column;height:auto}
-  .player-col iframe{height:280px}
-  .chat-resizer{display:none}
-  .chat-col{width:100%;border-left:none;border-top:1px solid var(--border);height:300px}
-  .chat-col.hidden{height:0;width:100%}
-  .stream-wrapper{flex:1 1 100%;min-width:unset}
-  .followed-item{grid-template-columns:80px 1fr}
-  .followed-item .thumb{width:80px;height:45px}
+  .card-body{flex-direction:column}
+  .chat-box,.chat-resizer{display:none!important}
+  .grid-container.mode-grid.single .stream-card{max-width:100%}
 }
 </style>
 </head>
@@ -164,8 +185,8 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 
     <div class="cookie-tip">
       🍪 <strong>Se os banners de cookies não te deixarem ver/falar:</strong> no browser, permite cookies de terceiros para este site
-      (Firefox: ícone de escudo 🛡 à esquerda do endereço → desativa a proteção para este site; Chrome: 🔒 → Cookies → Permitir),
-      e inicia sessão em <strong>twitch.tv</strong> uma vez. Depois os chat embutidos já te reconhecem.
+      (Firefox: escudo 🛡 à esquerda do endereço → desativa a proteção para este site; Chrome: 🔒 → Cookies → Permitir),
+      e inicia sessão em <strong>twitch.tv</strong> uma vez. Depois os chats embutidos já te reconhecem.
     </div>
 
     <div class="twitch-area" id="twitch-area">
@@ -200,13 +221,17 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 <div id="viewer_wrapper">
   <div class="viewer-topbar">
     <div class="mini-logo">MULTIFLOW</div>
+    <div class="layout-picker" title="Layout das streams">
+      <button id="btn-grid" onclick="setLayout('grid')" title="Modo grelha">▦</button>
+      <button id="btn-focus" onclick="setLayout('focus')" title="Modo destaque (principal grande + miniaturas)">⧉</button>
+    </div>
     <div class="viewer-add-inline">
       <input type="text" id="quickAdd" placeholder="adicionar canal…" maxlength="30">
       <button onclick="quickAddChannel()">+ ADD</button>
     </div>
     <button class="btn-ghost" onclick="backToConfig()">⚙ CONFIG</button>
   </div>
-  <div id="grid" class="grid-container"></div>
+  <div id="grid" class="grid-container mode-grid"></div>
 </div>
 
 <script>
@@ -214,9 +239,13 @@ const TWITCH_CLIENT_ID = "cmex5tfttf4ox0552zmnzzstn7gbo3";
 const STORAGE_KEY = "multiflow_v1_channels";
 const TOKEN_KEY   = "multiflow_v1_token";
 const USER_KEY    = "multiflow_v1_user";
+const LAYOUT_KEY  = "multiflow_v1_layout";
+const MAIN_KEY    = "multiflow_v1_mainchannel";
 const SCOPES = "user:read:follows";
 let channels = [];
 let twitchUser = null;
+let layout = localStorage.getItem(LAYOUT_KEY) || 'grid';
+let mainChannel = localStorage.getItem(MAIN_KEY) || null;
 
 function getRedirectUri(){ return location.origin + location.pathname; }
 
@@ -345,6 +374,7 @@ function renderFollowed(list){
   });
 }
 
+/* ---------- Estado / lista ---------- */
 function init(){
   handleAuthRedirect();
   const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
@@ -367,6 +397,7 @@ function addChannel(name){
 
 function removeChannel(name){
   channels = channels.filter(c => c.name !== name);
+  if (mainChannel === name) mainChannel = null;
   save();
   render();
   if (inViewer()) renderStreams();
@@ -409,7 +440,21 @@ function renderPills(){
   });
 }
 
+/* ---------- Layouts ---------- */
+function setLayout(mode){
+  layout = mode;
+  localStorage.setItem(LAYOUT_KEY, mode);
+  renderStreams();
+}
+
+function setMain(name){
+  mainChannel = name;
+  localStorage.setItem(MAIN_KEY, name);
+  renderStreams();
+}
+
 function attachResizer(resizer, chat){
+  if (!resizer) return;
   resizer.addEventListener('mousedown', e => {
     e.preventDefault();
     resizer.classList.add('dragging');
@@ -433,37 +478,79 @@ function popChat(name){
     'width=420,height=720,resizable=yes,scrollbars=yes');
 }
 
+function streamCardHTML(c, isMain, showMainBtn){
+  const parent = location.hostname;
+  return `
+    <div class="card-header">
+      <div class="cname">● ${c.name} ${isMain ? '<span style="color:#ffd166">★</span>' : '<span class="status-dot status-live"></span>'}</div>
+      <div class="controls">
+        ${showMainBtn ? `<button class="main-toggle" onclick="setMain('${c.name}')" title="Tornar canal principal">★ Main</button>` : ''}
+        <button onclick="popChat('${c.name}')" title="Chat em janela separada (recomendado p/ falar)">↗</button>
+        ${(layout==='grid' || isMain) ? `<button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat">💬</button>` : ''}
+        <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="player-box">
+        <iframe src="https://player.twitch.tv/?channel=${c.name}&parent=${parent}&muted=${isMain ? 'false' : 'true'}&autoplay=true" allowfullscreen></iframe>
+      </div>
+      ${(layout==='grid' || isMain) ? `
+        <div class="chat-resizer" title="Arrasta para redimensionar o chat"></div>
+        <div class="chat-box" id="chat-${c.name}">
+          <iframe src="https://www.twitch.tv/embed/${c.name}/chat?parent=${parent}&darkpopout"></iframe>
+        </div>` : ''}
+    </div>`;
+}
+
 function renderStreams(){
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   const parent = location.hostname;
-  channels.forEach(c => {
-    const wrap = document.createElement('div');
-    wrap.className = 'stream-wrapper';
-    wrap.innerHTML = `
-      <div class="stream-header">
-        <div class="channel-name">● ${c.name} <span class="status-dot status-live"></span></div>
-        <div class="controls">
-          <button onclick="popChat('${c.name}')" title="Abrir chat numa janela separada (recomendado para falar)">↗ Chat</button>
-          <button onclick="toggleChat('${c.name}')" title="Mostrar/Ocultar chat embutido">💬</button>
-          <button class="remove" onclick="removeChannel('${c.name}')" title="Remover">✕</button>
-        </div>
-      </div>
-      <div class="stream-body">
-        <div class="player-col">
-          <iframe src="https://player.twitch.tv/?channel=${c.name}&parent=${parent}&muted=true&autoplay=true" allowfullscreen></iframe>
-        </div>
-        <div class="chat-resizer" title="Arrasta para redimensionar o chat"></div>
-        <div class="chat-col" id="chat-${c.name}">
-          <iframe src="https://www.twitch.tv/embed/${c.name}/chat?parent=${parent}&darkpopout"></iframe>
-        </div>
-      </div>`;
-    grid.appendChild(wrap);
-    attachResizer(wrap.querySelector('.chat-resizer'), wrap.querySelector('.chat-col'));
-  });
+  grid.className = 'grid-container mode-' + layout + (layout==='grid' && channels.length===1 ? ' single' : '');
+  document.getElementById('btn-grid').classList.toggle('active', layout==='grid');
+  document.getElementById('btn-focus').classList.toggle('active', layout==='focus');
+
+  if (layout === 'grid'){
+    channels.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'stream-card';
+      card.innerHTML = streamCardHTML(c, false, true);
+      grid.appendChild(card);
+      attachResizer(card.querySelector('.chat-resizer'), card.querySelector('.chat-box'));
+    });
+    return;
+  }
+
+  /* MODO DESTAQUE */
+  const main = channels.find(c => c.name === mainChannel) || channels[0];
+  const sides = channels.filter(c => c.name !== main.name);
+
+  const focusMain = document.createElement('div');
+  focusMain.className = 'focus-main';
+  const mainCard = document.createElement('div');
+  mainCard.className = 'stream-card';
+  mainCard.innerHTML = streamCardHTML(main, true, false);
+  focusMain.appendChild(mainCard);
+  grid.appendChild(focusMain);
+  attachResizer(mainCard.querySelector('.chat-resizer'), mainCard.querySelector('.chat-box'));
+
+  if (sides.length){
+    const focusSide = document.createElement('div');
+    focusSide.className = 'focus-side';
+    sides.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'stream-card';
+      card.innerHTML = streamCardHTML(c, false, true);
+      focusSide.appendChild(card);
+    });
+    grid.appendChild(focusSide);
+  }
 }
 
-function toggleChat(name){ document.getElementById('chat-'+name).classList.toggle('hidden'); }
+function toggleChat(name){
+  const chat = document.getElementById('chat-'+name);
+  if (chat) chat.classList.toggle('hidden');
+}
 
 function quickAddChannel(){
   const inp = document.getElementById('quickAdd');
