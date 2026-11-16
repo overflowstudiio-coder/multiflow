@@ -220,6 +220,20 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .grid-container.mode-grid .player-box iframe{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto}
 @media (max-width:1200px){.grid-container.mode-grid .stream-card{flex:0 0 100%;max-width:100%}}
 .grid-container.mode-grid.single .stream-card{flex:0 1 auto;width:100%;max-width:min(100%,calc((100vh - 140px) * 16 / 9))}
+
+/* Autocomplete de canais */
+#ac-box{position:fixed;z-index:2000;display:none;background:rgba(13,13,26,.98);border:1px solid var(--border-light);
+  border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.65);backdrop-filter:blur(10px);overflow:hidden;max-height:340px;overflow-y:auto;text-align:left}
+.ac-item{display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;border-bottom:1px solid rgba(0,240,255,.07)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.sel{background:rgba(0,240,255,.12)}
+.ac-item img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:#000;flex-shrink:0}
+.ac-item .ac-info{min-width:0;flex:1}
+.ac-item .ac-name{font-weight:700;color:#fff;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-item .ac-sub{color:var(--muted);font-size:.75rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-live{font-family:'Orbitron';font-size:.55rem;font-weight:700;letter-spacing:1px;color:#fff;background:#eb0400;border-radius:4px;padding:2px 6px;flex-shrink:0}
+.ac-added{color:var(--purple);font-size:.75rem;font-weight:700;flex-shrink:0}
+.ac-msg{padding:12px 14px;color:var(--muted);font-size:.85rem}
 </style>
 </head>
 <body>
@@ -839,6 +853,108 @@ function renderFollowed(list){
   });
 }
 
+
+/* ================= AUTOCOMPLETE ================= */
+const ac = {box:null, input:null, items:[], sel:-1, timer:null, seq:0};
+function acInit(){
+  ac.box = document.createElement('div');
+  ac.box.id = 'ac-box';
+  document.body.appendChild(ac.box);
+  ['chInput','quickAdd'].forEach(id => {
+    const inp = document.getElementById(id);
+    inp.setAttribute('autocomplete','off');
+    inp.addEventListener('input', () => acQuery(inp));
+    inp.addEventListener('focus', () => { if (inp.value.trim()) acQuery(inp); });
+    inp.addEventListener('keydown', e => acKey(e, inp));
+    inp.addEventListener('blur', () => setTimeout(acClose, 180));
+  });
+  window.addEventListener('resize', acClose);
+  window.addEventListener('scroll', acClose, true);
+}
+function acPosition(){
+  const r = ac.input.getBoundingClientRect();
+  const below = window.innerHeight - r.bottom;
+  ac.box.style.left = r.left + 'px';
+  ac.box.style.width = Math.max(r.width, 280) + 'px';
+  if (below < 200 && r.top > below){
+    ac.box.style.top = 'auto';
+    ac.box.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+  } else {
+    ac.box.style.bottom = 'auto';
+    ac.box.style.top = (r.bottom + 4) + 'px';
+  }
+}
+function acClose(){
+  if (!ac.box) return;
+  ac.box.style.display = 'none';
+  ac.items = []; ac.sel = -1;
+  if (ac.input) ac.input.dataset.acPick = '0';
+}
+function acMsg(txt){
+  ac.box.innerHTML = '<div class="ac-msg">' + txt + '</div>';
+  ac.box.style.display = 'block';
+  acPosition();
+}
+function acQuery(inp){
+  ac.input = inp;
+  inp.dataset.acPick = '0';
+  const q = inp.value.trim();
+  clearTimeout(ac.timer);
+  if (q.length < 2){ acClose(); return; }
+  if (!localStorage.getItem(TOKEN_KEY)){ acMsg('Inicia sessão com a Twitch para veres sugestões de canais.'); return; }
+  const my = ++ac.seq;
+  ac.timer = setTimeout(async () => {
+    try {
+      const data = await twitchApi('/search/channels?first=8&query=' + encodeURIComponent(q));
+      if (my !== ac.seq) return;
+      acRender(data.data || []);
+    } catch(e){ if (my === ac.seq) acMsg('Não consegui pesquisar canais.'); }
+  }, 250);
+}
+function acRender(list){
+  ac.items = list; ac.sel = -1;
+  if (!list.length){ acMsg('Sem resultados.'); return; }
+  ac.box.innerHTML = '';
+  list.forEach((c, i) => {
+    const el = document.createElement('div');
+    el.className = 'ac-item';
+    const added = channels.find(x => x.name === c.broadcaster_login);
+    el.innerHTML = `<img src="${c.thumbnail_url}" alt="">
+      <div class="ac-info"><div class="ac-name">${c.display_name}</div>
+      <div class="ac-sub">${c.is_live ? (c.game_name || 'em direto') : 'offline'}</div></div>
+      ${c.is_live ? '<span class="ac-live">LIVE</span>' : ''}
+      ${added ? '<span class="ac-added">✓ adicionado</span>' : ''}`;
+    el.addEventListener('mousedown', ev => { ev.preventDefault(); acPick(i); });
+    ac.box.appendChild(el);
+  });
+  ac.box.style.display = 'block';
+  acPosition();
+}
+function acHighlight(){
+  [...ac.box.querySelectorAll('.ac-item')].forEach((el, i) => {
+    el.classList.toggle('sel', i === ac.sel);
+    if (i === ac.sel) el.scrollIntoView({block:'nearest'});
+  });
+  if (ac.input) ac.input.dataset.acPick = ac.sel >= 0 ? '1' : '0';
+}
+function acPick(i){
+  const c = ac.items[i];
+  if (!c) return;
+  addChannel(c.broadcaster_login);
+  if (ac.input) ac.input.value = '';
+  acClose();
+}
+function acKey(e, inp){
+  if (ac.box.style.display !== 'block' || !ac.items.length){ return; }
+  if (e.key === 'ArrowDown'){ e.preventDefault(); ac.sel = (ac.sel + 1) % ac.items.length; acHighlight(); }
+  else if (e.key === 'ArrowUp'){ e.preventDefault(); ac.sel = (ac.sel - 1 + ac.items.length) % ac.items.length; acHighlight(); }
+  else if (e.key === 'Enter'){
+    if (ac.sel >= 0){ e.preventDefault(); acPick(ac.sel); }
+    else acClose();
+  }
+  else if (e.key === 'Escape'){ acClose(); }
+}
+
 /* ================= Estado ================= */
 function init(){
   handleAuthRedirect();
@@ -1013,12 +1129,13 @@ function quickAddChannel(){
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('chInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter'){ addChannel(e.target.value); e.target.value = ''; }
+    if (e.key === 'Enter' && e.target.dataset.acPick !== '1'){ addChannel(e.target.value); e.target.value = ''; }
   });
   document.getElementById('quickAdd').addEventListener('keydown', e => {
-    if (e.key === 'Enter') quickAddChannel();
+    if (e.key === 'Enter' && e.target.dataset.acPick !== '1') quickAddChannel();
   });
   init();
+  acInit();
 });
 </script>
 </body>
