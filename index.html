@@ -97,6 +97,30 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .followed-empty{color:var(--muted);font-size:.9rem;padding:14px;text-align:center;border:1px dashed var(--border);border-radius:10px}
 .auth-note{color:var(--muted);font-size:.85rem;margin-top:10px;line-height:1.5}
 
+/* POP-OUT "CANAL ENTROU EM LIVE" */
+#live-toasts{position:fixed;right:18px;bottom:18px;z-index:999;display:flex;flex-direction:column;gap:10px;max-width:min(380px,92vw)}
+.live-toast{display:grid;grid-template-columns:96px 1fr auto;gap:12px;align-items:center;
+  background:linear-gradient(145deg,rgba(18,18,31,.95),rgba(7,7,15,.98));
+  border:1px solid rgba(235,4,0,.5);border-left:4px solid #eb0400;border-radius:12px;padding:10px;
+  box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 24px rgba(235,4,0,.15);backdrop-filter:blur(10px);
+  animation:toastIn .5s cubic-bezier(.21,1.35,.38,1) forwards}
+.live-toast.hiding{animation:toastOut .35s ease-in forwards}
+@keyframes toastIn{0%{transform:translateX(120%) scale(.7);opacity:0}70%{transform:translateX(-4%) scale(1.04);opacity:1}100%{transform:translateX(0) scale(1)}}
+@keyframes toastOut{to{transform:translateX(130%) scale(.85);opacity:0}}
+.live-toast .lt-img{width:96px;height:54px;border-radius:8px;object-fit:cover}
+.live-toast .lt-txt{min-width:0}
+.live-toast .lt-top{display:flex;align-items:center;gap:6px;font-family:'Orbitron';font-size:.62rem;font-weight:700;
+  letter-spacing:2px;color:#eb0400;text-transform:uppercase}
+.live-toast .lt-top .dot{width:7px;height:7px;border-radius:50%;background:#eb0400;box-shadow:0 0 8px #eb0400;animation:blinkDot 1.2s infinite}
+.live-toast .lt-name{font-weight:700;color:#fff;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-toast .lt-game{color:var(--muted);font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.live-toast .lt-act{display:flex;flex-direction:column;gap:6px}
+.live-toast .lt-watch{background:linear-gradient(90deg,var(--purple),var(--magenta));border:none;color:#fff;border-radius:8px;
+  padding:8px 12px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.62rem;letter-spacing:1px;white-space:nowrap}
+.live-toast .lt-watch:hover{filter:brightness(1.2)}
+.live-toast .lt-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;padding:2px}
+.live-toast .lt-x:hover{color:#ff4d4d}
+
 #viewer_wrapper{display:none;width:100%}
 #viewer_wrapper.active{display:block}
 .viewer-topbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;position:sticky;top:0;z-index:50;
@@ -192,6 +216,8 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 </head>
 <body>
 
+<div id="live-toasts"></div>
+
 <section id="launcher">
   <div class="logo-eyebrow">Twitch • Multi-Stream • Sem limites</div>
   <h1 class="logo-title">MULTIFLOW</h1>
@@ -209,10 +235,10 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
     <div class="twitch-area" id="twitch-area">
       <div id="login-box">
         <button class="btn-twitch" onclick="twitchLogin()">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.3 1L1.6 5.4v15.5h5.5V24h3.1l2.7-2.9h4.1L22.9 15V1H4.3zm16.5 13.1l-3.1 3h-4.9l-2.7 2.9v-2.9H6.2V3h14.6v11.1zM17.5 7.7v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2zm-5.5 0v5.5h-2V7.7h2z"/></svg>
           INICIAR SESSÃO COM TWITCH
         </button>
-        <p class="auth-note">Inicia sessão para veres os teus canais seguidos online, alertas de menções 🔔 e <strong>raids que seguem os streams automaticamente ⚡</strong>.</p>
+        <p class="auth-note">Inicia sessão para: canais seguidos online, menções 🔔, raids automáticos ⚡ e <strong>alertas pop-out quando um follow entra em live 🔴</strong>.</p>
         <p class="auth-note" id="auth-error" style="color:#ff7a7a;display:none"></p>
       </div>
       <div id="user-box" style="display:none"></div>
@@ -276,6 +302,65 @@ let twitchUser = null;
 let layout = localStorage.getItem(LAYOUT_KEY) || 'grid';
 let mainChannel = localStorage.getItem(MAIN_KEY) || null;
 let activeTab = null;
+
+/* ================= LIVE ALERTS (pop-out quando um follow entra em live) ================= */
+let prevLive = null;      // baseline na 1.ª verificação (sem spam inicial)
+let liveTimer = null;
+
+function startLivePolling(){
+  stopLivePolling();
+  liveTimer = setInterval(livePoll, 45000);
+  livePoll(true); // baseline imediata
+}
+function stopLivePolling(){ clearInterval(liveTimer); liveTimer = null; prevLive = null; }
+
+async function livePoll(initial){
+  if (!twitchUser) return;
+  try {
+    const data = await twitchApi("/streams/followed?user_id=" + twitchUser.id + "&first=100");
+    const list = data.data || [];
+    const cur = new Set(list.map(s => s.user_login));
+    if (!initial && prevLive){
+      list.forEach(s => { if (!prevLive.has(s.user_login)) showLiveToast(s); });
+    }
+    prevLive = cur;
+  } catch(e){ /* rede/API falhou — tenta no próximo ciclo */ }
+}
+
+function showLiveToast(s){
+  const box = document.getElementById("live-toasts");
+  const toast = document.createElement("div");
+  toast.className = "live-toast";
+  const thumb = s.thumbnail_url.replace("{width}","160").replace("{height}","90") + "?t=" + Date.now();
+  toast.innerHTML = `
+    <img class="lt-img" src="${thumb}" alt="">
+    <div class="lt-txt">
+      <div class="lt-top"><span class="dot"></span> ACABOU DE ENTRAR EM LIVE</div>
+      <div class="lt-name">${s.user_name}</div>
+      <div class="lt-game">${s.game_name || ""}</div>
+    </div>
+    <div class="lt-act">
+      <button class="lt-x" title="Fechar">×</button>
+      <button class="lt-watch">▶ VER</button>
+    </div>`;
+  toast.querySelector(".lt-x").onclick = () => dismissToast(toast);
+  toast.querySelector(".lt-watch").onclick = () => {
+    addChannel(s.user_login);
+    setActiveTab(s.user_login);
+    dismissToast(toast);
+  };
+  box.appendChild(toast);
+  playMentionSound();
+  if (notifyEnabled() && "Notification" in window && Notification.permission === "granted"){
+    new Notification("🔴 " + s.user_name + " entrou em LIVE", { body: s.game_name || s.title || "" });
+  }
+  setTimeout(() => { if (document.body.contains(toast)) dismissToast(toast); }, 15000);
+}
+
+function dismissToast(t){
+  t.classList.add("hiding");
+  setTimeout(() => t.remove(), 360);
+}
 
 /* ================= MENTIONS WATCHER (IRC) ================= */
 const mentionCounts = {};
@@ -375,17 +460,15 @@ function toggleNotifications(){
   document.getElementById("btn-notify").classList.toggle("active", on);
 }
 
-/* ================= RAID FOLLOWER (EventSub WebSocket) ================= */
-const raidFlash = {};           // canal -> true (banner temporário)
+/* ================= RAID FOLLOWER ================= */
+const raidFlash = {};
 const raidWatcher = {
   ws: null, sessionId: null, retry: null,
-  subscriptions: {},            // login -> subscription id
-  idCache: {},                  // login -> broadcaster id
-
+  subscriptions: {},
+  idCache: {},
   async sync(list){
     const want = (list || []).slice();
     if (!twitchUser){ this.stopAll(); return; }
-    /* remove subs de canais que já não estão na lista */
     for (const login of Object.keys(this.subscriptions)){
       if (!want.includes(login)) await this.unsubscribe(login);
     }
@@ -396,7 +479,6 @@ const raidWatcher = {
       await this.subscribeMany(missing);
     } catch(e){ console.warn("raidWatcher:", e); }
   },
-
   async ensureSession(){
     if (this.sessionId && this.ws && this.ws.readyState === 1) return;
     await new Promise((resolve, reject) => {
@@ -411,7 +493,6 @@ const raidWatcher = {
           this.sessionId = msg.payload.session.id;
           resolve();
         } else if (mt === "session_reconnect"){
-          /* reconnect simples: recomeça a sessão */
           this.sessionId = null;
         } else if (mt === "notification"){
           const sub = msg.payload.subscription;
@@ -420,16 +501,12 @@ const raidWatcher = {
             handleRaid(ev.from_broadcaster_user_login.toLowerCase(),
                        ev.to_broadcaster_user_login.toLowerCase());
           }
-        } else if (mt === "revocation"){
-          /* remove do registo local para subscrever de novo */
-          const cond = msg.payload.subscription && msg.payload.subscription.condition;
         }
       };
       ws.onerror = () => { clearTimeout(to); reject(new Error("falha no EventSub WS")); };
       ws.onclose = () => {
         if (!twitchUser) return;
         this.sessionId = null;
-        /* reconectar: subscrições do lado do server expiram com a sessão */
         const toSub = Object.keys(this.subscriptions);
         this.subscriptions = {};
         clearTimeout(this.retry);
@@ -440,7 +517,6 @@ const raidWatcher = {
       };
     });
   },
-
   async broadcasterId(login){
     if (this.idCache[login]) return this.idCache[login];
     const data = await twitchApi("/users?login=" + encodeURIComponent(login));
@@ -448,7 +524,6 @@ const raidWatcher = {
     this.idCache[login] = data.data[0].id;
     return this.idCache[login];
   },
-
   async subscribeMany(logins){
     const token = localStorage.getItem(TOKEN_KEY);
     for (const login of logins){
@@ -477,7 +552,6 @@ const raidWatcher = {
       }catch(e){ console.warn("raid sub erro", login, e); }
     }
   },
-
   async unsubscribe(login){
     const id = this.subscriptions[login];
     if (!id) return;
@@ -490,7 +564,6 @@ const raidWatcher = {
     }catch{}
     delete this.subscriptions[login];
   },
-
   stopAll(){
     clearTimeout(this.retry);
     if (this.ws){ try{ this.ws.close(); }catch{} }
@@ -499,13 +572,11 @@ const raidWatcher = {
 };
 
 function handleRaid(fromLogin, toLogin){
-  /* o cartão passa a mostrar o canal raidado */
   const idx = channels.findIndex(c => c.name === fromLogin);
   if (idx < 0) return;
   channels[idx] = { name: toLogin };
   if (mainChannel === fromLogin){ mainChannel = toLogin; localStorage.setItem(MAIN_KEY, toLogin); }
   if (activeTab === fromLogin) setActiveTab(toLogin);
-  /* atualiza o chat do painel: sai o chat do raider, entra o do raidado */
   removeChatFrame(fromLogin);
   ensureChatFrame(toLogin);
   delete mentionCounts[fromLogin];
@@ -546,7 +617,7 @@ function ensureChatFrame(name){
   frames.appendChild(frame);
   renderTabs();
   if (!activeTab) setActiveTab(name);
-  else { applyMentionState(name); applyRaidFlash(); }
+  else { applyMentionState(name); }
 }
 
 function removeChatFrame(name){
@@ -618,7 +689,7 @@ function toggleChatPanel(){
   });
 })();
 
-/* ================= OAuth Twitch ================= */
+/* ================= OAuth ================= */
 function getRedirectUri(){ return location.origin + location.pathname; }
 
 function twitchLogin(){
@@ -656,6 +727,7 @@ function logout(){
   twitchUser = null;
   watcher.sync([]);
   raidWatcher.stopAll();
+  stopLivePolling();
   document.getElementById("login-box").style.display = "block";
   document.getElementById("user-box").style.display = "none";
   document.getElementById("followed-section").style.display = "none";
@@ -677,6 +749,7 @@ async function loadUser(){
     renderUser();
     watcher.sync(channels.map(c => c.name));
     raidWatcher.sync(channels.map(c => c.name)).catch(()=>{});
+    startLivePolling();
     await loadFollowed();
     return;
   }
@@ -688,6 +761,7 @@ async function loadUser(){
     renderUser();
     watcher.sync(channels.map(c => c.name));
     raidWatcher.sync(channels.map(c => c.name)).catch(()=>{});
+    startLivePolling();
     await loadFollowed();
   } catch(e){ showAuthError("Erro ao ligar à conta Twitch: " + e.message); }
 }
@@ -701,7 +775,7 @@ function renderUser(){
       <img src="${twitchUser.profile_image_url}" alt="${twitchUser.display_name}">
       <div class="uinfo">
         <div class="uname">${twitchUser.display_name}</div>
-        <div class="udesc">sessão ativa — menções 🔔 + raids automáticos ⚡</div>
+        <div class="udesc">sessão ativa — menções 🔔 • raids ⚡ • alertas de live 🔴</div>
       </div>
       <button class="btn-logout" onclick="logout()">Sair</button>
     </div>`;
@@ -804,6 +878,8 @@ function openViewer(){
   if (!channels.length) return;
   document.getElementById('launcher').style.display = 'none';
   document.getElementById('viewer_wrapper').classList.add('active');
+  /* 🔧 correção: criar os frames de chat de canais já guardados (após refresh) */
+  channels.forEach(c => ensureChatFrame(c.name));
   renderStreams();
   watcher.sync(channels.map(c => c.name));
   raidWatcher.sync(channels.map(c => c.name)).catch(()=>{});
