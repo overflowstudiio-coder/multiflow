@@ -591,23 +591,45 @@ const raidWatcher = {
 
 function handleRaid(fromLogin, toLogin){
   const idx = channels.findIndex(c => c.name === fromLogin);
-  if (idx < 0) return;
-  channels[idx] = { name: toLogin };
+  if (idx < 0 || fromLogin === toLogin) return;
+  const card = document.getElementById("card-" + fromLogin);
+  const wasActive = (activeTab === fromLogin);
+  const duplicate = channels.some(c => c.name === toLogin);
+
+  if (duplicate) channels.splice(idx, 1);
+  else channels[idx] = { name: toLogin };
   if (mainChannel === fromLogin){ mainChannel = toLogin; localStorage.setItem(MAIN_KEY, toLogin); }
-  if (activeTab === fromLogin) setActiveTab(toLogin);
-  removeChatFrame(fromLogin);
-  ensureChatFrame(toLogin);
   delete mentionCounts[fromLogin];
-  raidFlash[toLogin] = true;
-  setTimeout(() => { delete raidFlash[toLogin]; applyRaidFlash(); }, 30000);
+
+  removeChatFrame(fromLogin);
+  if (!duplicate) ensureChatFrame(toLogin);
+  if (wasActive) setActiveTab(toLogin);
+
+  if (card){
+    const inMain = !!(card.parentElement && card.parentElement.classList.contains("focus-main"));
+    if (duplicate){
+      if (inMain) renderStreams(); else card.remove();
+    } else {
+      /* troca SÓ este cartão: os restantes players não recarregam */
+      card.id = "card-" + toLogin;
+      card.classList.remove("mentioned");
+      card.innerHTML = streamCardHTML({ name: toLogin }, inMain, !inMain);
+      raidFlash[toLogin] = true;
+      requestAnimationFrame(() => { applyMentionState(toLogin); applyRaidFlash(); });
+      setTimeout(() => {
+        delete raidFlash[toLogin];
+        const c2 = document.getElementById("card-" + toLogin);
+        const b2 = document.getElementById("raid-" + toLogin);
+        if (c2) c2.classList.remove("raided");
+        if (b2) b2.style.display = "none";
+      }, 30000);
+    }
+  }
   save();
-  render();
-  renderStreams();
+  renderPills();
   watcher.sync(channels.map(c => c.name));
   if (notifyEnabled() && "Notification" in window && Notification.permission === "granted"){
-    new Notification("⚡ RAID: #" + fromLogin + " → #" + toLogin, {
-      body: "O Multiflow seguiu o raid automaticamente."
-    });
+    new Notification("⚡ RAID: #" + fromLogin + " → #" + toLogin, { body: "O Multiflow seguiu o raid automaticamente." });
   }
   raidWatcher.sync(channels.map(c => c.name)).catch(()=>{});
 }
