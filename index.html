@@ -230,6 +230,17 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ac-live{font-family:'Orbitron';font-size:.55rem;font-weight:700;letter-spacing:1px;color:#fff;background:#eb0400;border-radius:4px;padding:2px 6px;flex-shrink:0}
 .ac-added{color:var(--purple);font-size:.75rem;font-weight:700;flex-shrink:0}
 .ac-msg{padding:12px 14px;color:var(--muted);font-size:.85rem}
+
+.disc{margin:0 0 14px;border:1px solid var(--border);border-radius:12px;background:rgba(7,7,15,.45);text-align:left;overflow:hidden}
+.disc>summary{list-style:none;cursor:pointer;padding:13px 16px;font-family:'Orbitron';font-weight:700;font-size:.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--cyan);display:flex;align-items:center;gap:10px}
+.disc>summary::-webkit-details-marker{display:none}
+.disc>summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .2s}
+.disc[open]>summary::after{transform:rotate(180deg)}
+.disc-body{padding:0 14px 14px}
+.disc-desc{color:var(--muted);font-size:.8rem;margin:0 0 10px;line-height:1.4}
+.disc-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.disc-tools select{background:rgba(7,7,15,.8);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'Rajdhani';font-weight:600}
+.fol-badge{display:inline-block;margin-left:8px;color:#00f0ff;font-size:.72rem;font-weight:700}
 </style>
 </head>
 <body>
@@ -269,6 +280,32 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
       </div>
       <div id="followed-grid" class="followed-grid"></div>
     </div>
+
+
+    <details class="disc" id="pt-sec">
+      <summary>🇵🇹 PT — Pequenos canais</summary>
+      <div class="disc-body">
+        <p class="disc-desc">Canais em direto em português com menos de 200 seguidores. A Twitch não separa PT de PT-BR: aparecem ambos.</p>
+        <div class="disc-tools"><button class="btn-refresh" onclick="loadPT()">↻ Atualizar</button></div>
+        <div id="pt-grid" class="followed-grid"></div>
+      </div>
+    </details>
+
+    <details class="disc" id="exp-sec">
+      <summary>🧭 Explorar canais</summary>
+      <div class="disc-body">
+        <p class="disc-desc">Descobre canais em direto fora do topo. Escolhe o idioma e carrega em Outros.</p>
+        <div class="disc-tools">
+          <select id="exp-lang" onchange="loadExplore()">
+            <option value="">Todos os idiomas</option><option value="pt">Português</option><option value="en">English</option>
+            <option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option>
+            <option value="it">Italiano</option><option value="ja">日本語</option>
+          </select>
+          <button class="btn-refresh" onclick="loadExplore()">🎲 Outros</button>
+        </div>
+        <div id="exp-grid" class="followed-grid"></div>
+      </div>
+    </details>
 
     <div class="input-group">
       <label for="chInput">Adicionar canal manualmente</label>
@@ -595,22 +632,18 @@ function handleRaid(fromLogin, toLogin){
   const card = document.getElementById("card-" + fromLogin);
   const wasActive = (activeTab === fromLogin);
   const duplicate = channels.some(c => c.name === toLogin);
-
   if (duplicate) channels.splice(idx, 1);
   else channels[idx] = { name: toLogin };
   if (mainChannel === fromLogin){ mainChannel = toLogin; localStorage.setItem(MAIN_KEY, toLogin); }
   delete mentionCounts[fromLogin];
-
   removeChatFrame(fromLogin);
   if (!duplicate) ensureChatFrame(toLogin);
   if (wasActive) setActiveTab(toLogin);
-
   if (card){
     const inMain = !!(card.parentElement && card.parentElement.classList.contains("focus-main"));
     if (duplicate){
       if (inMain) renderStreams(); else card.remove();
     } else {
-      /* troca SÓ este cartão: os restantes players não recarregam */
       card.id = "card-" + toLogin;
       card.classList.remove("mentioned");
       card.innerHTML = streamCardHTML({ name: toLogin }, inMain, !inMain);
@@ -952,6 +985,80 @@ function acKey(e, inp){
   else if (e.key === 'Escape'){ acClose(); }
 }
 
+/* ================= SECÇÕES PT E EXPLORAR ================= */
+const folCache = {};
+const MAX_FOLLOWERS = 200;
+function renderStreamList(grid, list, withFollowers){
+  grid.innerHTML = '';
+  if (!list.length){ grid.innerHTML = '<div class="followed-empty">Nada para mostrar agora 😴</div>'; return; }
+  list.forEach(s => {
+    const item = document.createElement('div');
+    item.className = 'followed-item';
+    const thumb = s.thumbnail_url.replace('{width}','160').replace('{height}','90') + '?t=' + Date.now();
+    const already = channels.find(c => c.name === s.user_login);
+    const fol = (withFollowers && folCache[s.user_id] != null) ? '<span class="fol-badge">' + folCache[s.user_id] + ' seguidores</span>' : '';
+    item.innerHTML = `<img class="thumb" src="${thumb}" alt="">
+      <div class="fmeta"><div class="fname"><span class="status-dot status-live"></span><span class="name-text">${s.user_name}</span>
+      <button class="fadd ${already ? 'added' : ''}" title="${already ? 'Já adicionado' : 'Adicionar à visualização'}">${already ? '✓' : '+'}</button></div>
+      <div class="fgame">${s.game_name || '—'}</div><div class="ftitle">${s.title || ''}</div>
+      <span class="fviewers">👁 ${s.viewer_count.toLocaleString('pt')}</span>${fol}</div>`;
+    const btn = item.querySelector('.fadd');
+    if (!already) btn.addEventListener('click', () => { addChannel(s.user_login); btn.classList.add('added'); btn.textContent = '✓'; btn.title = 'Já adicionado'; });
+    grid.appendChild(item);
+  });
+}
+async function fetchStreamPages(lang, pages){
+  let after = null, all = [];
+  for (let i = 0; i < pages; i++){
+    const data = await twitchApi('/streams?first=100' + (lang ? '&language=' + lang : '') + (after ? '&after=' + after : ''));
+    all = all.concat((data.data || []).filter(s => s.type === 'live'));
+    after = data.pagination && data.pagination.cursor;
+    if (!after) break;
+  }
+  const seen = new Set();
+  return all.filter(s => !seen.has(s.user_id) && seen.add(s.user_id));
+}
+async function followerTotal(id){
+  if (folCache[id] != null) return folCache[id];
+  const d = await twitchApi('/channels/followers?first=1&broadcaster_id=' + id);
+  folCache[id] = (typeof d.total === 'number') ? d.total : null;
+  return folCache[id];
+}
+async function loadPT(){
+  const grid = document.getElementById('pt-grid');
+  if (!twitchUser){ grid.innerHTML = '<div class="followed-empty">Inicia sessão com a Twitch para veres esta secção.</div>'; return; }
+  grid.innerHTML = '<div class="followed-empty">A procurar pequenos canais PT… (pode demorar alguns segundos)</div>';
+  try {
+    const all = await fetchStreamPages('pt', 8);
+    const cand = all.sort((a,b) => a.viewer_count - b.viewer_count).slice(0, 150);
+    const found = [];
+    for (let i = 0; i < cand.length && found.length < 20; i += 10){
+      const batch = cand.slice(i, i + 10);
+      const totals = await Promise.all(batch.map(s => followerTotal(s.user_id).catch(() => null)));
+      batch.forEach((s, k) => { if (totals[k] != null && totals[k] < MAX_FOLLOWERS) found.push(s); });
+      renderStreamList(grid, found.slice(0, 20), true);
+      if (!found.length) grid.innerHTML = '<div class="followed-empty">A verificar seguidores… (' + Math.min(i + 10, cand.length) + '/' + cand.length + ')</div>';
+    }
+    renderStreamList(grid, found.slice(0, 20), true);
+  } catch(e){ grid.innerHTML = '<div class="followed-empty">Não consegui carregar 😕<br><small>' + e.message + '</small></div>'; }
+}
+async function loadExplore(){
+  const grid = document.getElementById('exp-grid');
+  if (!twitchUser){ grid.innerHTML = '<div class="followed-empty">Inicia sessão com a Twitch para veres esta secção.</div>'; return; }
+  const lang = document.getElementById('exp-lang').value;
+  grid.innerHTML = '<div class="followed-empty">A explorar…</div>';
+  try {
+    const all = await fetchStreamPages(lang, 3);
+    const pool = all.slice(Math.min(20, Math.floor(all.length / 4)));
+    for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    renderStreamList(grid, pool.slice(0, 20), false);
+  } catch(e){ grid.innerHTML = '<div class="followed-empty">Não consegui carregar 😕<br><small>' + e.message + '</small></div>'; }
+}
+function initDiscover(){
+  document.getElementById('pt-sec').addEventListener('toggle', e => { if (e.target.open) loadPT(); });
+  document.getElementById('exp-sec').addEventListener('toggle', e => { if (e.target.open) loadExplore(); });
+}
+
 /* ================= Estado ================= */
 function init(){
   handleAuthRedirect();
@@ -1133,6 +1240,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   init();
   acInit();
+  initDiscover();
 });
 </script>
 </body>
