@@ -230,9 +230,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .ac-live{font-family:'Orbitron';font-size:.55rem;font-weight:700;letter-spacing:1px;color:#fff;background:#eb0400;border-radius:4px;padding:2px 6px;flex-shrink:0}
 .ac-added{color:var(--purple);font-size:.75rem;font-weight:700;flex-shrink:0}
 .ac-msg{padding:12px 14px;color:var(--muted);font-size:.85rem}
-
-#disc-drawer{position:fixed;top:0;left:0;bottom:0;width:min(440px,100vw);z-index:900;transform:translateX(-105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);
-  background:rgba(10,10,20,.98);border-right:1px solid var(--border-light);display:flex;flex-direction:column;box-shadow:12px 0 50px rgba(0,0,0,.6);backdrop-filter:blur(12px)}
+#disc-drawer{position:fixed;top:0;left:0;bottom:0;width:min(440px,100vw);z-index:900;transform:translateX(-105%);transition:transform .3s cubic-bezier(.2,.8,.2,1);background:rgba(10,10,20,.98);border-right:1px solid var(--border-light);display:flex;flex-direction:column;box-shadow:12px 0 50px rgba(0,0,0,.6);backdrop-filter:blur(12px)}
 #disc-drawer.open{transform:none}
 .disc-head{display:flex;align-items:center;gap:6px;padding:12px;border-bottom:1px solid var(--border)}
 .disc-tab{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'Orbitron';font-weight:700;font-size:.68rem;letter-spacing:1px}
@@ -244,8 +242,14 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
 .disc-pane .followed-grid{max-height:none;overflow:visible}
 .disc-desc{color:var(--muted);font-size:.8rem;margin:0 0 10px;line-height:1.4}
 .disc-tools{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
-.disc-tools select{background:rgba(7,7,15,.8);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'Rajdhani';font-weight:600}
+.disc-tools select,.disc-tools input[type=text]{background:rgba(7,7,15,.8);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 8px;font-family:'Rajdhani';font-weight:600;font-size:.85rem}
+.disc-tools input[type=text]{flex:1;min-width:140px}
+.disc-opt{display:flex;align-items:center;gap:6px;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer}
+.disc-opt input{accent-color:#00f0ff}
 .fol-badge{display:inline-block;margin-left:8px;color:#00f0ff;font-size:.72rem;font-weight:700}
+.tags-row{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.tagchip{background:rgba(123,47,247,.18);border:1px solid rgba(123,47,247,.35);color:#cdb8ff;font-size:.65rem;font-weight:700;border-radius:20px;padding:1px 7px}
+.tagchip.hit{background:rgba(0,240,255,.15);border-color:var(--cyan);color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -303,12 +307,19 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
     <button class="disc-close" onclick="closeDiscover()" title="Fechar">×</button>
   </div>
   <div class="disc-pane" id="pane-pt">
-    <p class="disc-desc">Canais em direto em português com menos de 200 seguidores. A Twitch não separa PT de PT-BR: aparecem ambos.</p>
-    <div class="disc-tools"><button class="btn-refresh" onclick="loadPT()">↻ Atualizar</button></div>
+    <p class="disc-desc">Canais em português filtrados por <strong>tags</strong>. Só aparecem canais cujo streamer marcou tags de Portugal (ex.: Portugal, PT, Tuga). Canais com tags do Brasil são excluídos.</p>
+    <div class="disc-tools">
+      <label class="disc-opt"><input type="checkbox" id="pt-tagon" onchange="ptOptChange()"> Só tags de Portugal</label>
+      <label class="disc-opt"><input type="checkbox" id="pt-folon" onchange="ptOptChange()"> &lt; 200 seguidores</label>
+    </div>
+    <div class="disc-tools">
+      <input type="text" id="pt-custom" placeholder="tags extra, separadas por vírgula (ex.: lisboa, porto)" onchange="ptOptChange()">
+      <button class="btn-refresh" onclick="loadPT()">↻</button>
+    </div>
     <div id="pt-grid" class="followed-grid"></div>
   </div>
   <div class="disc-pane" id="pane-exp">
-    <p class="disc-desc">Descobre canais em direto fora do topo. Escolhe o idioma e carrega em Outros.</p>
+    <p class="disc-desc">Descobre canais em direto fora do topo. Podes filtrar por idioma e por tag.</p>
     <div class="disc-tools">
       <select id="exp-lang" onchange="loadExplore()">
         <option value="">Todos os idiomas</option><option value="pt">Português</option><option value="en">English</option>
@@ -317,6 +328,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
       </select>
       <button class="btn-refresh" onclick="loadExplore()">🎲 Outros</button>
     </div>
+    <div class="disc-tools"><input type="text" id="exp-tag" placeholder="filtrar por tag (ex.: chill, speedrun)" onchange="loadExplore()"></div>
     <div id="exp-grid" class="followed-grid"></div>
   </div>
 </aside>
@@ -329,7 +341,7 @@ body::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
       <button id="btn-focus" onclick="setLayout('focus')" title="Modo destaque (principal + miniaturas)">⧉</button>
       <button id="btn-chatpanel" onclick="toggleChatPanel()" title="Mostrar/Ocultar painel de chat">💬</button>
       <button id="btn-notify" onclick="toggleNotifications()" title="Notificações quando te mencionam">🔔</button>
-      <button id="btn-pt" onclick="openDiscover('pt')" title="Pequenos canais PT (<200 seguidores)">🇵🇹</button>
+      <button id="btn-pt" onclick="openDiscover('pt')" title="Canais PT por tags">🇵🇹</button>
       <button id="btn-exp" onclick="openDiscover('exp')" title="Explorar canais">🧭</button>
     </div>
     <div class="viewer-add-inline">
@@ -992,14 +1004,48 @@ function acKey(e, inp){
   else if (e.key === 'Escape'){ acClose(); }
 }
 
-/* ================= PT + EXPLORAR (gaveta dentro do viewer) ================= */
+/* ================= PT + EXPLORAR (gaveta) com FILTRO POR TAGS ================= */
 const folCache = {};
 const MAX_FOLLOWERS = 200;
+const PT_OPTS_KEY = 'multiflow_v1_pt_opts';
 let ptLoaded = false, expLoaded = false;
-function openDiscover(tab){
-  document.getElementById('disc-drawer').classList.add('open');
-  switchDisc(tab);
+const normTag = t => String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const PT_EXACT = new Set(['pt','ptpt','portugal','portugues','portuguese','portugueseeu','portuguesept','europeanportuguese','tuga','tugas','tugasonly','ptportugal']);
+const BR_HINT = ['brasil','brazil','ptbr','brasileiro','brasileira','pt-br'];
+function isPortugalTag(n){ return PT_EXACT.has(n) || n.includes('portugal') || n.includes('tuga') || n.includes('ptpt') || n.includes('europeanportuguese'); }
+function hasBrTag(tags){ return tags.some(n => n === 'br' || BR_HINT.some(b => n.includes(normTag(b)))); }
+function getPtOpts(){
+  try { return Object.assign({tagOn:true, folOn:true, custom:''}, JSON.parse(localStorage.getItem(PT_OPTS_KEY) || '{}')); }
+  catch { return {tagOn:true, folOn:true, custom:''}; }
 }
+function customList(str){ return String(str||'').split(',').map(normTag).filter(Boolean); }
+function matchTags(stream, opt){
+  const tags = (stream.tags || []).map(normTag);
+  const custom = customList(opt.custom);
+  const hitCustom = custom.length && tags.some(t => custom.some(c => t.includes(c)));
+  if (opt.tagOn){
+    if (hasBrTag(tags)) return false;
+    return tags.some(isPortugalTag) || !!hitCustom;
+  }
+  if (custom.length) return !!hitCustom;
+  return true;
+}
+function initDiscoverUi(){
+  const o = getPtOpts();
+  document.getElementById('pt-tagon').checked = !!o.tagOn;
+  document.getElementById('pt-folon').checked = !!o.folOn;
+  document.getElementById('pt-custom').value = o.custom || '';
+}
+function ptOptChange(){
+  const o = {
+    tagOn: document.getElementById('pt-tagon').checked,
+    folOn: document.getElementById('pt-folon').checked,
+    custom: document.getElementById('pt-custom').value.trim()
+  };
+  localStorage.setItem(PT_OPTS_KEY, JSON.stringify(o));
+  loadPT();
+}
+function openDiscover(tab){ document.getElementById('disc-drawer').classList.add('open'); switchDisc(tab); }
 function closeDiscover(){ document.getElementById('disc-drawer').classList.remove('open'); }
 function switchDisc(tab){
   document.getElementById('tab-pt').classList.toggle('active', tab === 'pt');
@@ -1009,20 +1055,22 @@ function switchDisc(tab){
   if (tab === 'pt' && !ptLoaded) loadPT();
   if (tab === 'exp' && !expLoaded) loadExplore();
 }
-function renderStreamList(grid, list, withFollowers){
+function renderStreamList(grid, list, withFollowers, hlFn){
   grid.innerHTML = '';
-  if (!list.length){ grid.innerHTML = '<div class="followed-empty">Nada para mostrar agora 😴</div>'; return; }
+  if (!list.length){ grid.innerHTML = '<div class="followed-empty">Nenhum canal com estes filtros agora 😴<br><small>Poucos canais usam tags de país — tenta desligar um filtro ou juntar tags extra.</small></div>'; return; }
   list.forEach(s => {
     const item = document.createElement('div');
     item.className = 'followed-item';
     const thumb = s.thumbnail_url.replace('{width}','160').replace('{height}','90') + '?t=' + Date.now();
     const already = channels.find(c => c.name === s.user_login);
     const fol = (withFollowers && folCache[s.user_id] != null) ? '<span class="fol-badge">' + folCache[s.user_id] + ' seguidores</span>' : '';
+    const tg = (s.tags || []).slice(0, 5).map(t => '<span class="tagchip' + (hlFn && hlFn(normTag(t)) ? ' hit' : '') + '">' + t + '</span>').join('');
     item.innerHTML = `<img class="thumb" src="${thumb}" alt="">
       <div class="fmeta"><div class="fname"><span class="status-dot status-live"></span><span class="name-text">${s.user_name}</span>
       <button class="fadd ${already ? 'added' : ''}" title="${already ? 'Já adicionado' : 'Adicionar à visualização'}">${already ? '✓' : '+'}</button></div>
       <div class="fgame">${s.game_name || '—'}</div><div class="ftitle">${s.title || ''}</div>
-      <span class="fviewers">👁 ${s.viewer_count.toLocaleString('pt')}</span>${fol}</div>`;
+      <span class="fviewers">👁 ${s.viewer_count.toLocaleString('pt')}</span>${fol}
+      ${tg ? '<div class="tags-row">' + tg + '</div>' : ''}</div>`;
     const btn = item.querySelector('.fadd');
     if (!already) btn.addEventListener('click', () => { addChannel(s.user_login); btn.classList.add('added'); btn.textContent = '✓'; btn.title = 'Já adicionado'; });
     grid.appendChild(item);
@@ -1049,19 +1097,25 @@ async function loadPT(){
   const grid = document.getElementById('pt-grid');
   if (!twitchUser){ grid.innerHTML = '<div class="followed-empty">Inicia sessão com a Twitch para veres esta secção.</div>'; return; }
   ptLoaded = true;
-  grid.innerHTML = '<div class="followed-empty">A procurar pequenos canais PT… (pode demorar alguns segundos)</div>';
+  const opt = getPtOpts();
+  const custom = customList(opt.custom);
+  const hl = n => isPortugalTag(n) || custom.some(c => n.includes(c));
+  grid.innerHTML = '<div class="followed-empty">A procurar canais… (pode demorar alguns segundos)</div>';
   try {
-    const all = await fetchStreamPages('pt', 8);
-    const cand = all.sort((a,b) => a.viewer_count - b.viewer_count).slice(0, 150);
+    const all = await fetchStreamPages('pt', 10);
+    let list = all.filter(s => matchTags(s, opt));
+    list.sort((a,b) => opt.folOn ? a.viewer_count - b.viewer_count : b.viewer_count - a.viewer_count);
+    if (!opt.folOn){ renderStreamList(grid, list.slice(0, 30), false, hl); return; }
+    const cand = list.slice(0, 150);
     const found = [];
     for (let i = 0; i < cand.length && found.length < 20; i += 10){
       const batch = cand.slice(i, i + 10);
       const totals = await Promise.all(batch.map(s => followerTotal(s.user_id).catch(() => null)));
       batch.forEach((s, k) => { if (totals[k] != null && totals[k] < MAX_FOLLOWERS) found.push(s); });
-      if (found.length) renderStreamList(grid, found.slice(0, 20), true);
+      if (found.length) renderStreamList(grid, found.slice(0, 20), true, hl);
       else grid.innerHTML = '<div class="followed-empty">A verificar seguidores… (' + Math.min(i + 10, cand.length) + '/' + cand.length + ')</div>';
     }
-    renderStreamList(grid, found.slice(0, 20), true);
+    renderStreamList(grid, found.slice(0, 20), true, hl);
   } catch(e){ ptLoaded = false; grid.innerHTML = '<div class="followed-empty">Não consegui carregar 😕<br><small>' + e.message + '</small></div>'; }
 }
 async function loadExplore(){
@@ -1069,17 +1123,18 @@ async function loadExplore(){
   if (!twitchUser){ grid.innerHTML = '<div class="followed-empty">Inicia sessão com a Twitch para veres esta secção.</div>'; return; }
   expLoaded = true;
   const lang = document.getElementById('exp-lang').value;
+  const tagQ = customList(document.getElementById('exp-tag').value);
   grid.innerHTML = '<div class="followed-empty">A explorar…</div>';
   try {
-    const all = await fetchStreamPages(lang, 3);
-    const pool = all.slice(Math.min(20, Math.floor(all.length / 4)));
+    let all = await fetchStreamPages(lang, tagQ.length ? 8 : 3);
+    if (tagQ.length) all = all.filter(s => (s.tags || []).map(normTag).some(t => tagQ.some(c => t.includes(c))));
+    const pool = tagQ.length ? all.slice() : all.slice(Math.min(20, Math.floor(all.length / 4)));
     for (let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    renderStreamList(grid, pool.slice(0, 20), false);
+    renderStreamList(grid, pool.slice(0, 20), false, n => tagQ.some(c => n.includes(c)));
   } catch(e){ expLoaded = false; grid.innerHTML = '<div class="followed-empty">Não consegui carregar 😕<br><small>' + e.message + '</small></div>'; }
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDiscover(); });
 
-/* adicionar/remover cartão SEM recarregar os outros players */
 function appendCard(name){
   const c = channels.find(x => x.name === name);
   if (!c || document.getElementById('card-' + name)) return;
@@ -1291,6 +1346,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   init();
   acInit();
+  initDiscoverUi();
 });
 </script>
 </body>
